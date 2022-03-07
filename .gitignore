@@ -1,4 +1,8 @@
-bin
-obj
+*bin
+bin/
+obj/
 .suo
-.vs
+.vs/
+*.obj
+*.suo
+packages/
