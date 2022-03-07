@@ -32,7 +32,7 @@ namespace SudhirTest.Model
         public LiveChartVM(ILiveChartService liveChartService)
         {
             _liveChartService = liveChartService;
-            var timer = Observable.Interval(TimeSpan.FromSeconds(5));
+            var timer = Observable.Interval(TimeSpan.FromSeconds(2));
             timer.Subscribe(x =>
             {
                 x += 31;

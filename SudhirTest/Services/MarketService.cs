@@ -48,7 +48,7 @@ namespace SudhirTest.Services
         {
             while (true)
             {
-                await Task.Delay(5000, cancellationToken);
+                await Task.Delay(3000, cancellationToken);
                 await GetBinanceApi(_httpClient);
             }
         }
@@ -56,7 +56,7 @@ namespace SudhirTest.Services
         {
             try
             {
-                HttpResponseMessage Res = await _httpClient.GetAsync("https://api.binance.com/api/v3/avgPrice?symbol=BNBBTC");
+                HttpResponseMessage Res = await _httpClient.GetAsync("https://api.binance.com/api/v3/avgPrice?symbol=BTCUSDT");
                 if (Res.IsSuccessStatusCode)
                 {
                     var response = Res.Content.ReadAsStringAsync().Result;
