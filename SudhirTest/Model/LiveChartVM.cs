@@ -1,5 +1,7 @@
 ﻿using DotNetify;
+using Microsoft.EntityFrameworkCore;
 using SudhirTest.Data;
+using SudhirTest.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,57 +12,42 @@ namespace SudhirTest.Model
 {
     public class LiveChartVM : MulticastVM
     {
-       // readonly ApplicationDbContext _context;
-       
-        //public string[][] Waveform
-        //{
-        //    get => Get<string[][]>();
-        //    set => Set(value);
-        //}
-
-        public int[] Chart
+        private readonly ILiveChartService _liveChartService;
+        public double Chart
         {
-            get => Get<int[]>();
+            get => Get<double>();
             set => Set(value);
         }
-        public int[] Chart2
+        public DateTime Time
         {
-            get => Get<int[]>();
+            get => Get<DateTime>();
+            set => Set(value);
+        }
+        public string TimeFrame
+        {
+            get => Get<string>();
             set => Set(value);
         }
 
-
-        //public double[] Pie
-        //{
-        //    get => Get<double[]>();
-        //    set => Set(value);
-        //}
-
-        public LiveChartVM()
+        public LiveChartVM(ILiveChartService liveChartService)
         {
-            //_context = context;
-            var timer = Observable.Interval(TimeSpan.FromSeconds(1));
-            var random = new Random();
-
-            Chart = Enumerable.Range(1, 1).Select(_ => random.Next(17100, 17150)).ToArray();
-            Chart2 = Enumerable.Range(1, 1).Select(_ => random.Next(37200, 37210)).ToArray();
-
+            _liveChartService = liveChartService;
+            var timer = Observable.Interval(TimeSpan.FromSeconds(5));
             timer.Subscribe(x =>
             {
                 x += 31;
-
-
-                Chart = Chart.Skip(1).ToArray();
-                var barTemp = Chart.ToList();
-                barTemp.Add(Enumerable.Range(1, 1).Select(_ => random.Next(17100, 17110)).FirstOrDefault());
-                Chart = barTemp.ToArray();
-                Chart2 = Chart2.Skip(1).ToArray();
-                var barTemp2 = Chart2.ToList();
-                barTemp2.Add(Enumerable.Range(1, 1).Select(_ => random.Next(37200, 37210)).FirstOrDefault());
-                Chart2 = barTemp2.ToArray();
-
+                var temp = _liveChartService.GetSymbolCurrentPrice(TimeFrame);
+                Chart = temp[0].Price;
+                Time = temp[0].Time;
                 PushUpdates();
             });
         }
+
+        public void UpdateData(string name)
+        {
+            var temp = 53;
+        }
+
+
     }
     }

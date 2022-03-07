@@ -11,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Serialization;
 using SudhirTest.Data;
+using SudhirTest.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,30 +27,38 @@ namespace SudhirTest
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+        public IConfiguration Configuration { get; }    
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-    //        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    //.AddJwtBearer(options =>
-    //{
-    //    options.TokenValidationParameters = new TokenValidationParameters
-    //    {
-    //        ValidateIssuer = true,
-    //        ValidateAudience = true,
-    //        ValidateLifetime = true,
-    //        ValidateIssuerSigningKey = true,
-    //        ValidIssuer = Configuration["Jwt:Issuer"],
-    //        ValidAudience = Configuration["Jwt:Issuer"],
-    //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
-    //    };
-    //});
+            
+            services.AddHttpClient<IMarketService, MarketService>();
+            services.AddScoped<ILiveChartService, LiveChartService>();
+           
+            //        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            //.AddJwtBearer(options =>
+            //{
+            //    options.TokenValidationParameters = new TokenValidationParameters
+            //    {
+            //        ValidateIssuer = true,
+            //        ValidateAudience = true,
+            //        ValidateLifetime = true,
+            //        ValidateIssuerSigningKey = true,
+            //        ValidIssuer = Configuration["Jwt:Issuer"],
+            //        ValidAudience = Configuration["Jwt:Issuer"],
+            //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
+            //    };
+            //});
             services.AddRazorPages();
             services.AddCors();
             services.AddSignalR();
-            services.AddDotNetify();
-            services.AddDbContext<ApplicationDbContext>(item => item.UseSqlServer(Configuration.GetConnectionString("connection")));
+            services.AddDotNetify();            
+            services.AddDbContext<ApplicationDbContext>(item => item.UseNpgsql(Configuration.GetConnectionString("connection")));
+            services.AddDbContextFactory<ApplicationDbContext>(options =>
+             options.UseNpgsql(Configuration.GetConnectionString("connection")),
+                 ServiceLifetime.Scoped);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
