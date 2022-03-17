@@ -35,7 +35,7 @@ namespace SudhirTest
             
             services.AddHttpClient<IMarketService, MarketService>();
             services.AddScoped<ILiveChartService, LiveChartService>();
-           
+            services.AddScoped<IAnalysisService, AnalysisService>();
             //        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             //.AddJwtBearer(options =>
             //{

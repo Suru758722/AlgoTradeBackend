@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SudhirTest.Data;
@@ -9,9 +10,10 @@ using SudhirTest.Data;
 namespace SudhirTest.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220317041940_foo3")]
+    partial class foo3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -304,8 +306,6 @@ namespace SudhirTest.Migrations
 
                     b.HasIndex("ExchangeSegmentId");
 
-                    b.HasIndex("InstrumentId");
-
                     b.ToTable("InstrumentData");
                 });
 
@@ -377,7 +377,7 @@ namespace SudhirTest.Migrations
 
                     b.HasOne("SudhirTest.Entity.Instrument", "Instrument")
                         .WithMany()
-                        .HasForeignKey("InstrumentId");
+                        .HasForeignKey("ExchangeSegmentId");
 
                     b.Navigation("ExchangeSegment");
 

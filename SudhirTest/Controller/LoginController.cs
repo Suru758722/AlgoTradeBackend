@@ -54,7 +54,7 @@ namespace SudhirTest.Controller
                 secretKey = MARKET_SECRET,
                 source = "WEBAPI"
             };
-            var response = await _httpClient.PostAsync("/marketdata/auth/login", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json")).ConfigureAwait(false);
+            var response = await _httpClient.PostAsync("/apimarketdata/auth/login", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json")).ConfigureAwait(false);
 
             string str = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
@@ -64,14 +64,14 @@ namespace SudhirTest.Controller
             var socket = new SocketIO(URL, new SocketIOOptions
             {
                 EIO = 3,
-                Path = "/marketdata/socket.io",
+                Path = "/apimarketdata/socket.io",
                 Query = new Dictionary<string, string>()
                     {
                         { "token", loginResponse.Result.token },
                         { "userID", USER_ID },
                         { "source", "WebAPI" },
                         { "publishFormat", "JSON" },
-                        { "broadcastMode", "Partial" }
+                        { "broadcastMode", "Full" }
                     }
             });
             socket.On("1502-json-partial", response =>
@@ -150,7 +150,7 @@ namespace SudhirTest.Controller
                 xtsMessageCode = 1502
             };
 
-            var response = await _httpClient.PostAsync(@"/marketdata/instruments/subscription", payload?.GetHttpContent()).ConfigureAwait(false);
+            var response = await _httpClient.PostAsync(@"/apimarketdata/instruments/subscription", payload?.GetHttpContent()).ConfigureAwait(false);
 
             string txt;
 
@@ -166,18 +166,18 @@ namespace SudhirTest.Controller
         {
 
             //int exchange = (int)ExchangeSegment.MCXFO;
-            int exchange = 3;
-            long exchangeInstrumentId = 228031;   //reliance
+            int exchange = 1;
+            long exchangeInstrumentId = 22;   //reliance
 
-            if (this.MarketDataPorts == MarketDataPorts.openInterestEvent)
-            {
-                exchange = (int)ExchangeSegment.NSEFO;
-                exchangeInstrumentId = 45042; //nifty sep 19 fut
-            }
-            else if (this.MarketDataPorts == MarketDataPorts.indexDataEvent)
-            {
-                exchangeInstrumentId = 1;
-            }
+            //if (this.MarketDataPorts == MarketDataPorts.openInterestEvent)
+            //{
+            //    exchange = (int)ExchangeSegment.NSEFO;
+            //    exchangeInstrumentId = 45042; //nifty sep 19 fut
+            //}
+            //else if (this.MarketDataPorts == MarketDataPorts.indexDataEvent)
+            //{
+            //    exchangeInstrumentId = 1;
+            //}
 
             return new List<Instruments>()
             {

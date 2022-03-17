@@ -20,6 +20,7 @@ namespace SudhirTest.Model
         public ToucheLineModel Touchline { get; set; }
 
         public string ExchangeTimeStamp { get; set; }
-
+        public int ExchangeSegment { get; set; }
+        public int ExchangeInstrumentID { get; set; }
     }
 }

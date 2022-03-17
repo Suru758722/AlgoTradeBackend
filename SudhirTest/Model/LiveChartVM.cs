@@ -28,15 +28,20 @@ namespace SudhirTest.Model
             get => Get<string>();
             set => Set(value);
         }
+        public string Instrument
+        {
+            get => Get<string>();
+            set => Set(value);
+        }
 
         public LiveChartVM(ILiveChartService liveChartService)
         {
             _liveChartService = liveChartService;
-            var timer = Observable.Interval(TimeSpan.FromSeconds(2));
+            var timer = Observable.Interval(TimeSpan.FromSeconds(15));
             timer.Subscribe(x =>
             {
-                x += 31;
-                var temp = _liveChartService.GetSymbolCurrentPrice(TimeFrame);
+                //x += 31;
+                var temp = _liveChartService.GetSymbolCurrentPrice(TimeFrame, Instrument);
                 Chart = temp[0].Price;
                 Time = temp[0].Time;
                 PushUpdates();

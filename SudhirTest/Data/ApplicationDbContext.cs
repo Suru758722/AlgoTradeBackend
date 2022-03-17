@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using SudhirTest.Entity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -17,29 +18,11 @@ namespace SudhirTest.Data
         {
         }
 
-        public DbSet<SymbolData> SymbolData { get; set; }
-        public DbSet<Symbol> Symbol { get; set; }
+        public DbSet<ExchangeSegment> ExchangeSegment { get; set; }
+        public DbSet<Instrument> Instrument { get; set; }
+        public DbSet<InstrumentData> InstrumentData { get; set; }
 
     }
 }
 
 
-public class SymbolData
-{
-    [Key]
-    public int Id { get; set; }
-    public int? SymbolId { get; set; }
-    public double Price { get; set; }
-    public DateTime Time { get; set; }
-    [ForeignKey("SymbolId")]
-    public virtual Symbol Symbol { get; set; }
-}
-
-public class Symbol
-{
-    [Key]
-    public int Id { get; set; }
-    public string SymbolCode { get; set; }
-    public string SymbolName { get; set; }
-
-}

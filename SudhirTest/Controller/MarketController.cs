@@ -39,14 +39,7 @@ namespace SudhirTest.Controller
             await _marketService.SaveMarketDataAsync();
             return Ok();
         }
-        [HttpGet]
-        [Route("LoadXTSData")]
-        public async Task<IActionResult> LoadXTSData()
-        {
-
-            await _marketService.LoadXTSData();
-            return Ok();
-        }
+        
 
     }
 }

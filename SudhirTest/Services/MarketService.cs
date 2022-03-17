@@ -10,46 +10,55 @@ using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using SocketIOClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using SudhirTest.Entity;
+using Microsoft.Extensions.Configuration;
 
 namespace SudhirTest.Services
 {
     public interface IMarketService
     {
         Task<dynamic> SaveMarketDataAsync();
-        Task<dynamic> LoadXTSData();
     }
     public class MarketService : IMarketService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _config;
         private readonly HttpClient _httpClient;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public MarketService(ApplicationDbContext context, HttpClient httpClient)
+        public MarketDataPorts MarketDataPorts { get; set; } = MarketDataPorts.marketDepthEvent;
+
+        public MarketService(IConfiguration config,IServiceScopeFactory scopeFactory, HttpClient httpClient)
         {
-            _context = context;
+            _scopeFactory = scopeFactory;
             _httpClient = httpClient;
+            _config = config;
         }
 
         public async Task<dynamic> SaveMarketDataAsync()
         {
             try
             {
-                const string MARKET_APPKEY = "e16c965046e51516c3e171";
-                const string MARKET_SECRET = "Hbui010#Oq";
+                 string url = _config["Xts:BaseUrl"];
+                 string appKey = _config["Xts:AppKey"];
+                 string secret = _config["Xts:Secret"];
                 var payload = new
                 {
-                    appKey = MARKET_APPKEY,
-                    secretKey = MARKET_SECRET,
+                    appKey = appKey,
+                    secretKey = secret,
                     source = "WEBAPI"
                 };
-                _httpClient.BaseAddress = new Uri("https://xts.compositedge.com");
+                _httpClient.BaseAddress = new Uri(url);
                 _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                var response = await _httpClient.PostAsync("https://xts.compositedge.com/marketdata/auth/login", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
+                var response = await _httpClient.PostAsync(url + "/apimarketdata/auth/login", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
                 string str = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                 var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(str);
                 CancellationToken cancellationToken = new CancellationToken();
-                await PeriodicFooAsync(loginResponse.Result.token, _httpClient, cancellationToken);
+                await GetSocketData(url, loginResponse.Result.token, _httpClient, cancellationToken);
                 return true;
             }catch(Exception ex)
             {
@@ -57,82 +66,107 @@ namespace SudhirTest.Services
             }
 
         }
-        private async Task PeriodicFooAsync(string token,HttpClient _httpClient,CancellationToken cancellationToken)
+        private async Task GetSocketData(string Url, string token,HttpClient _httpClient,CancellationToken cancellationToken)
         {
             _httpClient.DefaultRequestHeaders.Add("authorization", token);
-
-            while (true)
+            string USER_ID = "JHS04";
+           var socket = new SocketIO(Url, new SocketIOOptions
             {
-                await Task.Delay(60000, cancellationToken);
-                await GetBinanceApi(token,_httpClient);
-            }
-        }
-        private async Task GetBinanceApi(string token,HttpClient _httpClient)
-        {
-            try
-            {
-                string startTime = DateTime.Now.AddMinutes(-2).ToString("MMM dd yyyy HHmmss");
-                string endTime = DateTime.Now.ToString("MMM dd yyyy HHmmss");
-
-                HttpResponseMessage Res = await _httpClient.GetAsync("https://xts.compositedge.com/marketdata/instruments/ohlc?exchangeSegment=1&exchangeInstrumentID=22&startTime="+startTime+"&endTime="+endTime+"&compressionValue=60");
-                if (Res.IsSuccessStatusCode)
-                {
-                    var response = Res.Content.ReadAsStringAsync().Result;
-                    SymbolModel info = JsonConvert.DeserializeObject<SymbolModel>(response);
-                    SymbolData symbol = new SymbolData();
-                    symbol.SymbolId = 1;
-                    symbol.Price = Convert.ToDouble(info.Result.DataReponse.Split("|")[4]);
-                    symbol.Time = DateTime.Now;
-                    await _context.SymbolData.AddAsync(symbol);
-                    await _context.SaveChangesAsync();
-
-                }
-
-            }
-            catch (Exception ex)
-            {
-            }
+                EIO = 3,
+                Path = "/apimarketdata/socket.io",
+                Query = new Dictionary<string, string>()
+                    {
+                        { "token", token },
+                        { "userID", USER_ID },
+                        { "source", "WebAPI" },
+                        { "publishFormat", "JSON" },
+                        { "broadcastMode", "Full" }
+                    }
+            });
             
+            socket.On("1502-json-full", response =>
+            {
+
+                var obj = response.GetValue();
+
+                var mdp = JsonConvert.DeserializeObject<MdpModel>(obj.ToString(), new Newtonsoft.Json.JsonSerializerSettings()
+                {
+                    NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
+                    MissingMemberHandling = Newtonsoft.Json.MissingMemberHandling.Ignore
+                });
+               
+                StoreData(mdp);
+               
+            });
+
+            await socket.ConnectAsync();
+            await SubscribeAsync();
         }
-
-        public async Task<dynamic> LoadXTSData()
+        private void StoreData(MdpModel mdp)
         {
-            try
+            using (var scope = _scopeFactory.CreateScope())
             {
-                const string URL = "https://xts.compositedge.com/";
-
-                const string MARKET_APPKEY = "b1329cedc2fb6704cec753";
-                const string MARKET_SECRET = "Qpac026$oC";
-                var payload = new
-                {
-                    appKey = MARKET_APPKEY,
-                    secretKey = MARKET_SECRET,
-                    source = "WebAPI"
-                };
-                //if (Uri.TryCreate(URL, UriKind.Absolute, out Uri result))
-                //{
-                //    string authority = result.GetLeftPart(UriPartial.Authority);
-                //    _httpClient.BaseAddress = new Uri(authority);
-                //    _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                //}
-                 _httpClient.BaseAddress = new Uri(URL);
-                //_httpClient.DefaultRequestHeaders.Clear();
-               // _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var res = await _httpClient.PostAsync("https://xts.compositedge.com/marketdata/auth/login", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json")).ConfigureAwait(false);
-
-
-                if (res.IsSuccessStatusCode)
-                {
-                    var response = res.Content.ReadAsStringAsync().Result;
-                    var info = JsonConvert.DeserializeObject(response);
-                }
-                return true;
-            }catch(Exception ex)
-            {
-                throw ex;
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                int exchangeId = db.ExchangeSegment.Where(x => x.ExchangeId == mdp.ExchangeSegment).Select(x => x.Id).FirstOrDefault(); 
+                int instrumentId = db.Instrument.Where(x => x.ExchangeInstrumentID == mdp.ExchangeInstrumentID).Select(x => x.Id).FirstOrDefault();
+                InstrumentData symbol = new InstrumentData();
+                symbol.Time = DateTime.Now;
+                symbol.ExchangeSegmentId = exchangeId;
+                symbol.InstrumentId = instrumentId;
+                symbol.LastTradedPrice = mdp.Touchline.LastTradedPrice;
+                symbol.Time = DateTime.Now;
+                db.InstrumentData.Add(symbol);
+                db.SaveChanges();
             }
         }
+        private async Task SubscribeAsync()
+        {
+
+            SubscriptionPayload payload = new SubscriptionPayload()
+            {
+                instruments = GetInstruments(MarketDataPorts),
+                xtsMessageCode = 1502
+            };
+
+            var response = await _httpClient.PostAsync(@"/apimarketdata/instruments/subscription", payload?.GetHttpContent()).ConfigureAwait(false);
+
+            string txt;
+
+            if (response != null)
+            {
+                txt = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            }
+
+
+        }
+        private List<Instruments> GetInstruments(MarketDataPorts port)
+        {
+
+            //int exchange = (int)ExchangeSegment.MCXFO;
+            int exchange = 1;
+            long exchangeInstrumentId = 22;   //reliance
+
+            //if (this.MarketDataPorts == MarketDataPorts.openInterestEvent)
+            //{
+            //    exchange = (int)ExchangeSegment.NSEFO;
+            //    exchangeInstrumentId = 45042; //nifty sep 19 fut
+            //}
+            //else if (this.MarketDataPorts == MarketDataPorts.indexDataEvent)
+            //{
+            //    exchangeInstrumentId = 1;
+            //}
+            List<Instruments> list = new List<Instruments>();
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                var temp = db.Instrument.Include(x => x.ExchangeSegment).Select(x => new Instruments {exchangeSegment = (int)x.ExchangeSegment.ExchangeId ,exchangeInstrumentID = x.ExchangeInstrumentID});
+                list = temp.ToList()
+;            }
+
+            return list;
+
+        }
+       
     }
 }
