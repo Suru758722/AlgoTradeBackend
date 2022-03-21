@@ -53,9 +53,10 @@ namespace SudhirTest
             services.AddRazorPages();
             services.AddCors();
             services.AddSignalR();
-            services.AddDotNetify();            
-            services.AddDbContext<ApplicationDbContext>(item => item.UseNpgsql(Configuration.GetConnectionString("connection")));
-            services.AddDbContextFactory<ApplicationDbContext>(options =>
+            services.AddDotNetify();
+            //services.AddDbContext<ApplicationDbContext>(item => item.UseNpgsql(Configuration.GetConnectionString("connection")));
+           
+             services.AddDbContextFactory<ApplicationDbContext>(options =>
              options.UseNpgsql(Configuration.GetConnectionString("connection")),
                  ServiceLifetime.Scoped);
 

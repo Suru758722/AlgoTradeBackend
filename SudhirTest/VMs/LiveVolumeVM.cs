@@ -44,7 +44,7 @@ namespace SudhirTest.Model
 
 
             TimeFrame = _analysisService.GetTimeFrame().FirstOrDefault().Frame;
-            Instrument = Convert.ToString(_analysisService.GetInstrument().FirstOrDefault().Id);
+            Instrument = Convert.ToString(_analysisService.GetInstrument().FirstOrDefault());
 
             var timer = Observable.Interval(TimeSpan.FromSeconds(3));
             timer.Subscribe(x =>

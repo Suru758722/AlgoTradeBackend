@@ -13,19 +13,19 @@ namespace SudhirTest.Services
     public interface IAnalysisService
     {
         dynamic LoadBhavCopy(object data);
-        List<Instrument> GetInstrument();
+        List<string> GetInstrument();
         List<TimeFrame> GetTimeFrame();
         bool DeleteOldData();
 
     }
     public class AnalysisService : IAnalysisService
     {
-        public readonly ApplicationDbContext _context;
+       // private readonly ApplicationDbContext _context;
         private readonly IConfiguration _config;
 
-        public AnalysisService(IConfiguration config,ApplicationDbContext context)
+        public AnalysisService(IConfiguration config)
         {
-            _context = context;
+           // _context = context;
             _config = config;
 
         }
@@ -33,9 +33,14 @@ namespace SudhirTest.Services
         {
             throw new NotImplementedException();
         }
-        public List<Instrument> GetInstrument()
+        public List<string> GetInstrument()
         {
-            return _context.Instrument.ToList();
+            List<string> list = new List<string>();
+            foreach (InstrumentNumberEnum val in Enum.GetValues(typeof(InstrumentNumberEnum)))
+            {
+                list.Add(val.ToString());
+            }
+                return list;
         }
         public List<TimeFrame> GetTimeFrame()
         {
@@ -54,7 +59,7 @@ namespace SudhirTest.Services
                 using (SqlConnection conn = new SqlConnection(_config["ConnectionStrings:connection"]))
                 {
                     conn.Open();
-                    foreach (InstrumentNumber val in Enum.GetValues(typeof(InstrumentNumber)))
+                    foreach (InstrumentNumberEnum val in Enum.GetValues(typeof(InstrumentNumberEnum)))
                      {
                         string sql = "Delete from " + val.ToString() + "Where LastTradedTime < " + DateTime.Now.AddDays(-30);
                         using (SqlCommand command = new SqlCommand(sql, conn))

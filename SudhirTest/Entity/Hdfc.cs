@@ -5,8 +5,11 @@ using System.Threading.Tasks;
 
 namespace SudhirTest.Entity
 {
-    public class Hdfc : Reliance
+    public class Hdfc : BaseEntity
     {
-       
+        public double LastTradedPrice { get; set; }
+        public long LastTradedTime { get; set; }
+        public int ExchangeInstrumentID { get; set; }
+        public long LastTradedQunatity { get; set; }
     }
 }

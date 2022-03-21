@@ -17,6 +17,7 @@ using SudhirTest.Entity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using Npgsql;
 
 namespace SudhirTest.Services
 {
@@ -82,56 +83,76 @@ namespace SudhirTest.Services
                         { "userID", USER_ID },
                         { "source", "WebAPI" },
                         { "publishFormat", "JSON" },
-                        { "broadcastMode", "Full" }
+                        { "broadcastMode", "Partial" }
                     }
             });
-            
-            socket.On("1502-json-full", response =>
+
+            socket.On("1501-json-partial", response =>
+            {
+                var obj = response.GetValue();
+                string mdp = obj.ToString();
+
+                Dictionary<string, string> keyValuePairs = mdp.Split(',')
+                    .Select(value => value.Split(':'))
+                    .ToDictionary(pair => pair[0], pair => pair[1]);
+                var dico = keyValuePairs.ToList();
+                  StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]),Convert.ToInt64(dico.Where(x => x.Key == "ltt").FirstOrDefault().Value), Convert.ToDouble(dico.Where(x => x.Key == "ltp").FirstOrDefault().Value), Convert.ToInt64(dico.Where(x => x.Key == "ltq").FirstOrDefault().Value));
+            });
+                socket.On("1501-json-full", response =>
             {
 
                 var obj = response.GetValue();
 
-                var mdp = JsonConvert.DeserializeObject<MdpModel>(obj.ToString(), new Newtonsoft.Json.JsonSerializerSettings()
+                var mdp = JsonConvert.DeserializeObject<ToucheLineModel>(obj.ToString(), new Newtonsoft.Json.JsonSerializerSettings()
                 {
                     NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
                     MissingMemberHandling = Newtonsoft.Json.MissingMemberHandling.Ignore
                 });
                
-                StoreData(mdp);
+                StoreData(mdp.ExchangeInstrumentID,mdp.LastTradedTime,mdp.LastTradedPrice,mdp.LastTradedQunatity);
                
             });
 
             await socket.ConnectAsync();
             await SubscribeAsync();
         }
-        private void StoreData(MdpModel mdp)
+        private void StoreData(int ExchangeInstrumentID,long LastTradedTime,double LastTradedPrice,long LastTradedQunatity)
         {
             DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-            string instrumentName = Enum.GetName(typeof(InstrumentNumber), Convert.ToInt32(mdp.ExchangeInstrumentID));
-            DateTime currentTime = dateTime.AddSeconds(mdp.LastTradedTime);
+            string instrumentName = Enum.GetName(typeof(InstrumentNumberEnum), Convert.ToInt32(ExchangeInstrumentID));
+            DateTime currentTime = dateTime.AddSeconds(LastTradedTime);
             DateTime tableTime;
-            string sql = "Select * top 1 From" + instrumentName + "order by Id Desc";
-            using (SqlConnection conn = new SqlConnection(_config["ConnectionStrings:connection"]))
+            DataTable dataTable = new DataTable();
+            List<InsertDataModel> list = new List<InsertDataModel>();
+            string sql = "select * from " + instrumentName.ToLower() + " order by id desc fetch first 1 rows only";
+            using (var con = new NpgsqlConnection(_config["ConnectionStrings:connection"]))
             {
-                conn.Open();
-                using (SqlCommand command = new SqlCommand(sql, conn))
-                {
-                    DataTable data = new DataTable();
-                    data.Load(command.ExecuteReader());
+                con.Open();
+                using (var cmd = new NpgsqlCommand(sql, con))
+               {
+                   // DataTable data = new DataTable();
+                   // data.Load(cmd.ExecuteReader());
+                    NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
+                    // this will query your database and return the result to your datatable
+                    da.Fill(dataTable);
+                    foreach (DataRow dr in dataTable.Rows)
+                    {
+                        list.Add(new InsertDataModel { LastTradedPrice = (double)dr.ItemArray[1],LastTradedTime = (long)dr.ItemArray[2]});
+                    }
 
-                   // List<InsertDataModel> table = data;// .ToList<InsertDataModel>();
-                   
                 }
-                if (tableTime.AddMinutes(1).ToString("HH:mm") == currentTime.ToString("HH:mm"))
+                if (dateTime.AddSeconds(list.FirstOrDefault().LastTradedTime).AddMinutes(1).ToString("HH:mm") == currentTime.ToString("HH:mm"))
+               if(true)
                 {
-                    using (SqlCommand command = new SqlCommand("insert into"+ instrumentName+"values("+
-                            mdp.LastTradedPrice + ","+ mdp.LastTradedTime + ","+
-                            mdp.ExchangeInstrumentID+","+mdp.LastTradedQunatity+");", conn))
+                    string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity) values(" +
+                            LastTradedPrice + "," + LastTradedTime + "," +
+                            ExchangeInstrumentID + "," + LastTradedQunatity + ")";
+                    using (var command = new NpgsqlCommand(sqlQuery, con))
                              {
                                  command.ExecuteNonQuery();
                              }
                 }
-                conn.Close();
+                con.Close();
 
             }
             
@@ -142,7 +163,7 @@ namespace SudhirTest.Services
             SubscriptionPayload payload = new SubscriptionPayload()
             {
                 instruments = GetInstruments(MarketDataPorts),
-                xtsMessageCode = 1502
+                xtsMessageCode = 1501
             };
 
             var response = await _httpClient.PostAsync(@"/apimarketdata/instruments/subscription", payload?.GetHttpContent()).ConfigureAwait(false);
@@ -173,13 +194,12 @@ namespace SudhirTest.Services
             //    exchangeInstrumentId = 1;
             //}
             List<Instruments> list = new List<Instruments>();
-            using (var scope = _scopeFactory.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-                var temp = db.Instrument.Include(x => x.ExchangeSegment).Select(x => new Instruments {exchangeSegment = (int)x.ExchangeSegment.ExchangeId ,exchangeInstrumentID = x.ExchangeInstrumentID});
-                list = temp.ToList()
-;            }
+            foreach (InstrumentNumberEnum val in Enum.GetValues(typeof(InstrumentNumberEnum)))
+            {
+                list.Add(new Instruments { exchangeSegment = (int)ExchangeSegmentEnum.NSECM, exchangeInstrumentID = (long)val });
+            }
+           
 
             return list;
 

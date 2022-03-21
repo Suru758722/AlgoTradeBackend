@@ -5,8 +5,11 @@ using System.Threading.Tasks;
 
 namespace SudhirTest.Entity
 {
-    public class KotakBank: Reliance
+    public class KotakBank : BaseEntity
     {
-
+        public double LastTradedPrice { get; set; }
+        public long LastTradedTime { get; set; }
+        public int ExchangeInstrumentID { get; set; }
+        public long LastTradedQunatity { get; set; }
     }
 }

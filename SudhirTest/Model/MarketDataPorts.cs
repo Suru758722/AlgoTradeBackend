@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace SudhirTest.Model
 {
-    public enum ExchangeSegment
+    public enum ExchangeSegmentEnum
     {
         /// <summary>
         /// NSE cash
@@ -101,7 +101,7 @@ namespace SudhirTest.Model
     }
 
 
-    public enum InstrumentNumber
+    public enum InstrumentNumberEnum
     {
         RELIANCE = 2885,
         INFY = 1594,

@@ -33,7 +33,7 @@ namespace SudhirTest.Services
            
             try
             {
-                string instrumentName = Enum.GetName(typeof(InstrumentNumber), Convert.ToInt32(instrument));
+                string instrumentName = Enum.GetName(typeof(InstrumentNumberEnum), Convert.ToInt32(instrument));
                 string sql = "Select * top 1 From" + instrumentName + "order by Id Desc";
                 using (SqlConnection conn = new SqlConnection(_config["ConnectionStrings:connection"]))
                 {
@@ -62,7 +62,7 @@ namespace SudhirTest.Services
 
             try
             {
-                string instrumentName = Enum.GetName(typeof(InstrumentNumber),Convert.ToInt32(instrument));
+                string instrumentName = Enum.GetName(typeof(InstrumentNumberEnum),Convert.ToInt32(instrument));
                 string sql = "Select * top 1 From"+ instrumentName + "order by Id Desc";
                 using (SqlConnection conn = new SqlConnection(_config["ConnectionStrings:connection"]))
                 {
