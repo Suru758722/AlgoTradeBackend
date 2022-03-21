@@ -52,6 +52,14 @@
               "target": "Package",
               "version": "[5.3.0, )"
             },
+            "EngineIoClientDotNet.Standard": {
+              "target": "Package",
+              "version": "[0.0.6, )"
+            },
+            "Json.Net": {
+              "target": "Package",
+              "version": "[1.0.33, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[3.1.15, )"
@@ -59,6 +67,10 @@
             "Microsoft.AspNetCore.Cors": {
               "target": "Package",
               "version": "[2.2.0, )"
+            },
+            "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[5.0.11, )"
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
@@ -77,6 +89,30 @@
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.1, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[5.0.0, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL.Design": {
+              "target": "Package",
+              "version": "[1.1.0, )"
+            },
+            "SocketIOClient": {
+              "target": "Package",
+              "version": "[3.0.5, )"
+            },
+            "SocketIoClientDotNet.Standard": {
+              "target": "Package",
+              "version": "[0.0.6, )"
+            },
+            "SuperSocket.ClientEngine.Core": {
+              "target": "Package",
+              "version": "[0.10.0, )"
+            },
+            "WebSocket4Net": {
+              "target": "Package",
+              "version": "[0.15.2, )"
             }
           },
           "imports": [
@@ -97,7 +133,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.405\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.406\\RuntimeIdentifierGraph.json"
         }
       }
     }
