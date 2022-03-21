@@ -99,4 +99,19 @@ namespace SudhirTest.Model
         /// </summary>
         marketDepthEvent100 = 5018
     }
+
+
+    public enum InstrumentNumber
+    {
+        RELIANCE = 2885,
+        INFY = 1594,
+        HDFCBANK = 1333,
+        ICICIBANK = 4963,
+        HDFC = 1330,
+        TCS = 11536,
+        KOTAKBANK = 1922,
+        LT = 11483,
+        SBIN = 3045,
+        HINDUNILVR = 1394,
+    }
 }

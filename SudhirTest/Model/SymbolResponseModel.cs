@@ -10,4 +10,9 @@ namespace SudhirTest.Model
         public double Price { get; set; }
         public DateTime Time { get; set; }
     }
+    public class VolumeModel
+    {
+        public long Volume { get; set; }
+        public long Time { get; set; }
+    }
 }

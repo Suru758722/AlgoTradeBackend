@@ -15,6 +15,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SudhirTest.Entity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace SudhirTest.Services
 {
@@ -104,20 +106,35 @@ namespace SudhirTest.Services
         }
         private void StoreData(MdpModel mdp)
         {
-            using (var scope = _scopeFactory.CreateScope())
+            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+            string instrumentName = Enum.GetName(typeof(InstrumentNumber), Convert.ToInt32(mdp.ExchangeInstrumentID));
+            DateTime currentTime = dateTime.AddSeconds(mdp.LastTradedTime);
+            DateTime tableTime;
+            string sql = "Select * top 1 From" + instrumentName + "order by Id Desc";
+            using (SqlConnection conn = new SqlConnection(_config["ConnectionStrings:connection"]))
             {
-                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                int exchangeId = db.ExchangeSegment.Where(x => x.ExchangeId == mdp.ExchangeSegment).Select(x => x.Id).FirstOrDefault(); 
-                int instrumentId = db.Instrument.Where(x => x.ExchangeInstrumentID == mdp.ExchangeInstrumentID).Select(x => x.Id).FirstOrDefault();
-                InstrumentData symbol = new InstrumentData();
-                symbol.Time = DateTime.Now;
-                symbol.ExchangeSegmentId = exchangeId;
-                symbol.InstrumentId = instrumentId;
-                symbol.LastTradedPrice = mdp.Touchline.LastTradedPrice;
-                symbol.Time = DateTime.Now;
-                db.InstrumentData.Add(symbol);
-                db.SaveChanges();
+                conn.Open();
+                using (SqlCommand command = new SqlCommand(sql, conn))
+                {
+                    DataTable data = new DataTable();
+                    data.Load(command.ExecuteReader());
+
+                   // List<InsertDataModel> table = data;// .ToList<InsertDataModel>();
+                   
+                }
+                if (tableTime.AddMinutes(1).ToString("HH:mm") == currentTime.ToString("HH:mm"))
+                {
+                    using (SqlCommand command = new SqlCommand("insert into"+ instrumentName+"values("+
+                            mdp.LastTradedPrice + ","+ mdp.LastTradedTime + ","+
+                            mdp.ExchangeInstrumentID+","+mdp.LastTradedQunatity+");", conn))
+                             {
+                                 command.ExecuteNonQuery();
+                             }
+                }
+                conn.Close();
+
             }
+            
         }
         private async Task SubscribeAsync()
         {

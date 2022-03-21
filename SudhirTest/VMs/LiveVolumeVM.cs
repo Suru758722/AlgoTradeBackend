@@ -1,5 +1,6 @@
 ﻿using DotNetify;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using SudhirTest.Data;
 using SudhirTest.Services;
 using System;
@@ -10,9 +11,11 @@ using System.Threading.Tasks;
 
 namespace SudhirTest.Model
 {
-    public class LiveChartVM : MulticastVM
+    public class LiveVolumeVM : MulticastVM
     {
         private readonly ILiveChartService _liveChartService;
+        private readonly IAnalysisService _analysisService;
+
         public double Chart
         {
             get => Get<double>();
@@ -34,25 +37,34 @@ namespace SudhirTest.Model
             set => Set(value);
         }
 
-        public LiveChartVM(ILiveChartService liveChartService)
+        public LiveVolumeVM(ILiveChartService liveChartService, IAnalysisService analysisService)
         {
             _liveChartService = liveChartService;
-            var timer = Observable.Interval(TimeSpan.FromSeconds(15));
+            _analysisService = analysisService;
+
+
+            TimeFrame = _analysisService.GetTimeFrame().FirstOrDefault().Frame;
+            Instrument = Convert.ToString(_analysisService.GetInstrument().FirstOrDefault().Id);
+
+            var timer = Observable.Interval(TimeSpan.FromSeconds(3));
             timer.Subscribe(x =>
             {
-                //x += 31;
-                var temp = _liveChartService.GetSymbolCurrentPrice(TimeFrame, Instrument);
+                var t = x;
+                var temp = _liveChartService.GetSymbolCurrentPrice((int)x, Instrument);
                 Chart = temp[0].Price;
                 Time = temp[0].Time;
                 PushUpdates();
             });
         }
 
-        public void UpdateData(string name)
+        public void UpdateTime(string key)
         {
-            var temp = 53;
+            TimeFrame = key;
         }
-
+        public void UpdateInstrument(string key)
+        {
+            Instrument = key;
+        }
 
     }
     }

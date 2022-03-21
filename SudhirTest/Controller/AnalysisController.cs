@@ -25,11 +25,26 @@ namespace SudhirTest.Controller
             _analysisService.LoadBhavCopy(data);
             return Ok();
         }
+
         [HttpGet]
         [Route("GetInstrument")]
         public IActionResult GetInstrument()
         {            
             return Ok(_analysisService.GetInstrument());
+        }
+
+        [HttpGet]
+        [Route("GetTimeFrame")]
+        public IActionResult GetTimeFrame()
+        {
+            return Ok(_analysisService.GetTimeFrame());
+        }
+
+        [HttpGet]
+        [Route("DeleteOldData")]
+        public IActionResult DeleteOldData()
+        {
+            return Ok(_analysisService.DeleteOldData());
         }
     }
 }

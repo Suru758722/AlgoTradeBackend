@@ -21,6 +21,16 @@ namespace SudhirTest.Data
         public DbSet<ExchangeSegment> ExchangeSegment { get; set; }
         public DbSet<Instrument> Instrument { get; set; }
         public DbSet<InstrumentData> InstrumentData { get; set; }
+        public DbSet<Reliance> Reliance { get; set; }
+        public DbSet<Hdfc> Hdfc { get; set; }
+        public DbSet<HdfcBank> HdfcBank { get; set; }
+        public DbSet<IciciBank> IciciBank { get; set; }
+        public DbSet<HindUnilvr> HindUnilvr { get; set; }
+        public DbSet<Tcs> Tcs { get; set; }
+        public DbSet<Sbin> Sbin { get; set; }
+        public DbSet<Infy> Infy { get; set; }
+        public DbSet<LT> LAndT { get; set; }
+        public DbSet<KotakBank> KotakBank { get; set; }
 
     }
 }
