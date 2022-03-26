@@ -56,6 +56,10 @@
               "target": "Package",
               "version": "[0.0.6, )"
             },
+            "Google.Apis.Sheets.v4": {
+              "target": "Package",
+              "version": "[1.56.0.2623, )"
+            },
             "Json.Net": {
               "target": "Package",
               "version": "[1.0.33, )"

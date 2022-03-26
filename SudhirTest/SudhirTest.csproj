@@ -9,6 +9,7 @@
     <PackageReference Include="DotNetify.Core" Version="5.3.0" />
     <PackageReference Include="DotNetify.SignalR" Version="5.3.0" />
     <PackageReference Include="EngineIoClientDotNet.Standard" Version="0.0.6" />
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.56.0.2623" />
     <PackageReference Include="Json.Net" Version="1.0.33" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.15" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />

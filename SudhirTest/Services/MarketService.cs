@@ -24,6 +24,7 @@ namespace SudhirTest.Services
     public interface IMarketService
     {
         Task<dynamic> SaveMarketDataAsync();
+        dynamic TestMethod();
     }
     public class MarketService : IMarketService
     {
@@ -118,10 +119,10 @@ namespace SudhirTest.Services
         }
         private void StoreData(int ExchangeInstrumentID,long LastTradedTime,double LastTradedPrice,long LastTradedQunatity)
         {
-            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+           // DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0);
             string instrumentName = Enum.GetName(typeof(InstrumentNumberEnum), Convert.ToInt32(ExchangeInstrumentID));
-            DateTime currentTime = dateTime.AddSeconds(LastTradedTime);
-            DateTime tableTime;
+            //DateTime currentTime = new DateTime(LastTradedTime);  //dateTime.AddSeconds(Math.Round(LastTradedTime / 1000d)).ToLocalTime();
+            //DateTime tableTime;
             DataTable dataTable = new DataTable();
             List<InsertDataModel> list = new List<InsertDataModel>();
             string sql = "select * from " + instrumentName.ToLower() + " order by id desc fetch first 1 rows only";
@@ -130,10 +131,8 @@ namespace SudhirTest.Services
                 con.Open();
                 using (var cmd = new NpgsqlCommand(sql, con))
                {
-                   // DataTable data = new DataTable();
-                   // data.Load(cmd.ExecuteReader());
+                   
                     NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-                    // this will query your database and return the result to your datatable
                     da.Fill(dataTable);
                     foreach (DataRow dr in dataTable.Rows)
                     {
@@ -141,16 +140,31 @@ namespace SudhirTest.Services
                     }
 
                 }
-                if (dateTime.AddSeconds(list.FirstOrDefault().LastTradedTime).AddMinutes(1).ToString("HH:mm") == currentTime.ToString("HH:mm"))
-               if(true)
+                if (list.Count == 0)
                 {
                     string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity) values(" +
                             LastTradedPrice + "," + LastTradedTime + "," +
                             ExchangeInstrumentID + "," + LastTradedQunatity + ")";
                     using (var command = new NpgsqlCommand(sqlQuery, con))
-                             {
-                                 command.ExecuteNonQuery();
-                             }
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                }
+                else
+                {
+                    string current = UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm");
+                    string previous = UnixTimeStampToDateTime(list.FirstOrDefault().LastTradedTime).ToString("HH:mm");
+
+                    if (current != previous)
+                    {
+                        string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity) values(" +
+                                LastTradedPrice + "," + LastTradedTime + "," +
+                                ExchangeInstrumentID + "," + LastTradedQunatity + ")";
+                        using (var command = new NpgsqlCommand(sqlQuery, con))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                    }
                 }
                 con.Close();
 
@@ -204,6 +218,19 @@ namespace SudhirTest.Services
             return list;
 
         }
-       
+
+        public dynamic TestMethod()
+        {
+            StoreData(2885, 1332336832, 2467.45, 565);
+            return true;
+        }
+
+        public DateTime UnixTimeStampToDateTime(long unixTimeStamp)
+        {
+            // Unix timestamp is seconds past epoch
+            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Local);
+            dateTime = dateTime.AddSeconds(unixTimeStamp).ToLocalTime();
+            return dateTime.AddYears(10);
+        }
     }
 }

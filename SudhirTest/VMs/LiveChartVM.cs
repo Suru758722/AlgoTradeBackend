@@ -11,12 +11,12 @@ using System.Threading.Tasks;
 
 namespace SudhirTest.Model
 {
-    public class LiveVolumeVM : MulticastVM
+    public class LiveChartVM : MulticastVM
     {
         private readonly ILiveChartService _liveChartService;
         private readonly IAnalysisService _analysisService;
 
-        public double Volume
+        public double Chart
         {
             get => Get<double>();
             set => Set(value);
@@ -36,13 +36,13 @@ namespace SudhirTest.Model
             get => Get<string>();
             set => Set(value);
         }
-        public class VolumeVmModel
+        public class SymbolVmModel
         {
             public long time { get; set; }
-            public long value { get; set; }
+            public double value { get; set; }
 
         }
-        public LiveVolumeVM(ILiveChartService liveChartService, IAnalysisService analysisService)
+        public LiveChartVM(ILiveChartService liveChartService, IAnalysisService analysisService)
         {
             _liveChartService = liveChartService;
             _analysisService = analysisService;
@@ -50,27 +50,36 @@ namespace SudhirTest.Model
 
             TimeFrame = _analysisService.GetTimeFrame().FirstOrDefault().Frame;
             Instrument = Convert.ToString(_analysisService.GetInstrument().FirstOrDefault());
-
+        
             var timer = Observable.Interval(TimeSpan.FromSeconds(60));
             timer.Subscribe(x =>
             {
                 var t = x;
-                var temp = _liveChartService.GetSymbolCurrentVolume( Instrument);
-                Volume = temp[0].Volume;
+                var temp = _liveChartService.GetSymbolCurrentPrice(Instrument);
+                Chart = temp[0].Price;
                 Time = temp[0].Time;
                 PushUpdates();
             });
         }
-        public List<VolumeVmModel> volumeList => _liveChartService.GetVolumeList(TimeFrame, Instrument).Select(x => new VolumeVmModel { time = x.Time, value = x.Volume }).ToList();
 
+       
+        public List<SymbolVmModel> chartList
+        {
+            get => _liveChartService.GetChartList(TimeFrame, Instrument).Select(x => new SymbolVmModel { time = x.Time, value = x.Price }).ToList();
+            set => Set(value);
+        }
         public void UpdateTime(string key)
         {
             TimeFrame = key;
+            chartList = _liveChartService.GetChartList(TimeFrame, Instrument).Select(x => new SymbolVmModel { time = x.Time, value = x.Price }).ToList();
+
         }
         public void UpdateInstrument(string key)
         {
             Instrument = key;
+            chartList = _liveChartService.GetChartList(TimeFrame, Instrument).Select(x => new SymbolVmModel { time = x.Time, value = x.Price }).ToList();
+
         }
 
     }
-    }
+}

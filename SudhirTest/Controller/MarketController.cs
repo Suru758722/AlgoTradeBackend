@@ -39,7 +39,14 @@ namespace SudhirTest.Controller
             await _marketService.SaveMarketDataAsync();
             return Ok();
         }
-        
+        [HttpGet]
+        [Route("TestMethod")]
+        public async Task<IActionResult> TestMethod()
+        {
+
+            await _marketService.SaveMarketDataAsync();
+            return Ok();
+        }
 
     }
 }

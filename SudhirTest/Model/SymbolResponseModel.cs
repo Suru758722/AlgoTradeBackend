@@ -8,7 +8,7 @@ namespace SudhirTest.Model
     public class SymbolResponseModel
     {
         public double Price { get; set; }
-        public DateTime Time { get; set; }
+        public long Time { get; set; }
     }
     public class VolumeModel
     {
