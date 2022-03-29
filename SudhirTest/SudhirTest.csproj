@@ -29,4 +29,8 @@
     <PackageReference Include="WebSocket4Net" Version="0.15.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\json\" />
+  </ItemGroup>
+
 </Project>

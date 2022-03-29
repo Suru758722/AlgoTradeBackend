@@ -44,7 +44,7 @@ namespace SudhirTest.Controller
         public async Task<IActionResult> TestMethod()
         {
 
-            await _marketService.SaveMarketDataAsync();
+            await _marketService.TestMethod();
             return Ok();
         }
 

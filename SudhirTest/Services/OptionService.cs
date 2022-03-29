@@ -1,62 +1,46 @@
-﻿using Newtonsoft.Json;
-using SudhirTest.Data;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Npgsql;
+using SocketIOClient;
 using SudhirTest.Model;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using SocketIOClient;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using SudhirTest.Entity;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Data.SqlClient;
-using System.Data;
-using Npgsql;
-using Google.Apis.Sheets.v4;
-using Google.Apis.Auth.OAuth2;
-using System.IO;
-using Google.Apis.Services;
-using Google.Apis.Sheets.v4.Data;
 
 namespace SudhirTest.Services
 {
-    public interface IMarketService
+    public interface IOptionService
     {
-        Task<dynamic> SaveMarketDataAsync();
-        dynamic TestMethod();
+        Task<dynamic> SaveOptionData();
     }
-    public class MarketService : IMarketService
+    public class OptionService : IOptionService
     {
         private readonly IConfiguration _config;
         private readonly HttpClient _httpClient;
-        private readonly IServiceScopeFactory _scopeFactory;
-        static readonly string[] Scopes = { SheetsService.Scope.Spreadsheets };
-        static readonly string ApplicationName = "TestDotnet";
-        static readonly string sheet = "Sheet1";
-        static readonly string SpreadsheetId = "1W0I_bfWuRED_p6pOs6ROCKhS3soMiDsGm2RtPNbTacE";
-        static SheetsService service;
+        private readonly IServiceScopeFactory _scopeFactory;       
         public MarketDataPorts MarketDataPorts { get; set; } = MarketDataPorts.marketDepthEvent;
 
-        public MarketService(IConfiguration config,IServiceScopeFactory scopeFactory, HttpClient httpClient)
+        public OptionService(IConfiguration config, IServiceScopeFactory scopeFactory, HttpClient httpClient)
         {
             _scopeFactory = scopeFactory;
             _httpClient = httpClient;
             _config = config;
         }
 
-        public async Task<dynamic> SaveMarketDataAsync()
+        public async Task<dynamic> SaveOptionData()
         {
             try
             {
-                 string url = _config["Xts:BaseUrl"];
-                 string appKey = _config["Xts:AppKey"];
-                 string secret = _config["Xts:Secret"];
+                string url = _config["Xts:BaseUrl"];
+                string appKey = _config["Xts:AppKey"];
+                string secret = _config["Xts:Secret"];
                 var payload = new
                 {
                     appKey = appKey,
@@ -73,17 +57,18 @@ namespace SudhirTest.Services
                 CancellationToken cancellationToken = new CancellationToken();
                 await GetSocketData(url, loginResponse.Result.token, _httpClient, cancellationToken);
                 return true;
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return ex;
             }
 
         }
-        private async Task GetSocketData(string Url, string token,HttpClient _httpClient,CancellationToken cancellationToken)
+        private async Task GetSocketData(string Url, string token, HttpClient _httpClient, CancellationToken cancellationToken)
         {
             _httpClient.DefaultRequestHeaders.Add("authorization", token);
             string USER_ID = "JHS04";
-           var socket = new SocketIO(Url, new SocketIOOptions
+            var socket = new SocketIO(Url, new SocketIOOptions
             {
                 EIO = 3,
                 Path = "/apimarketdata/socket.io",
@@ -93,7 +78,7 @@ namespace SudhirTest.Services
                         { "userID", USER_ID },
                         { "source", "WebAPI" },
                         { "publishFormat", "JSON" },
-                        { "broadcastMode", "Partial" }
+                        { "broadcastMode", "Full" }
                     }
             });
 
@@ -106,29 +91,29 @@ namespace SudhirTest.Services
                     .Select(value => value.Split(':'))
                     .ToDictionary(pair => pair[0], pair => pair[1]);
                 var dico = keyValuePairs.ToList();
-                  StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]),Convert.ToInt64(dico.Where(x => x.Key == "ltt").FirstOrDefault().Value), Convert.ToDouble(dico.Where(x => x.Key == "ltp").FirstOrDefault().Value), Convert.ToInt64(dico.Where(x => x.Key == "ltq").FirstOrDefault().Value));
+                StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]), Convert.ToInt64(dico.Where(x => x.Key == "ltt").FirstOrDefault().Value), Convert.ToDouble(dico.Where(x => x.Key == "ltp").FirstOrDefault().Value), Convert.ToInt64(dico.Where(x => x.Key == "ltq").FirstOrDefault().Value));
             });
-                socket.On("1501-json-full", response =>
+            socket.On("1510-json-full", response =>
             {
 
                 var obj = response.GetValue();
 
-                var mdp = JsonConvert.DeserializeObject<ToucheLineModel>(obj.ToString(), new Newtonsoft.Json.JsonSerializerSettings()
+                var mdp = JsonConvert.DeserializeObject<OpenInterestModel>(obj.ToString(), new Newtonsoft.Json.JsonSerializerSettings()
                 {
                     NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
                     MissingMemberHandling = Newtonsoft.Json.MissingMemberHandling.Ignore
                 });
-               
-                StoreData(mdp.ExchangeInstrumentID,mdp.LastTradedTime,mdp.LastTradedPrice,mdp.LastTradedQunatity);
-               
+
+              //  StoreData(mdp.ExchangeInstrumentID, mdp.LastTradedTime, mdp.LastTradedPrice, mdp.LastTradedQunatity);
+
             });
 
             await socket.ConnectAsync();
             await SubscribeAsync();
         }
-        private void StoreData(int ExchangeInstrumentID,long LastTradedTime,double LastTradedPrice,long LastTradedQunatity)
+        private void StoreData(int ExchangeInstrumentID, long LastTradedTime, double LastTradedPrice, long LastTradedQunatity)
         {
-           // DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+            // DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0);
             string instrumentName = Enum.GetName(typeof(InstrumentNumberEnum), Convert.ToInt32(ExchangeInstrumentID));
             //DateTime currentTime = new DateTime(LastTradedTime);  //dateTime.AddSeconds(Math.Round(LastTradedTime / 1000d)).ToLocalTime();
             //DateTime tableTime;
@@ -139,13 +124,13 @@ namespace SudhirTest.Services
             {
                 con.Open();
                 using (var cmd = new NpgsqlCommand(sql, con))
-               {
-                   
+                {
+
                     NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
                     da.Fill(dataTable);
                     foreach (DataRow dr in dataTable.Rows)
                     {
-                        list.Add(new InsertDataModel { LastTradedPrice = (double)dr.ItemArray[1],LastTradedTime = (long)dr.ItemArray[2]});
+                        list.Add(new InsertDataModel { LastTradedPrice = (double)dr.ItemArray[1], LastTradedTime = (long)dr.ItemArray[2] });
                     }
 
                 }
@@ -173,16 +158,13 @@ namespace SudhirTest.Services
                         {
                             command.ExecuteNonQuery();
                         }
-                        if (instrumentName.ToLower() == InstrumentNumberEnum.HDFC.ToString().ToLower())
-                        {
-                            AddtoGoogleSheet(LastTradedTime, LastTradedPrice, LastTradedQunatity);
-                        }
+                        
                     }
                 }
                 con.Close();
 
             }
-            
+
         }
         private async Task SubscribeAsync()
         {
@@ -190,7 +172,7 @@ namespace SudhirTest.Services
             SubscriptionPayload payload = new SubscriptionPayload()
             {
                 instruments = GetInstruments(MarketDataPorts),
-                xtsMessageCode = 1501
+                xtsMessageCode = 1510
             };
 
             var response = await _httpClient.PostAsync(@"/apimarketdata/instruments/subscription", payload?.GetHttpContent()).ConfigureAwait(false);
@@ -222,11 +204,11 @@ namespace SudhirTest.Services
             //}
             List<Instruments> list = new List<Instruments>();
 
-            foreach (InstrumentNumberEnum val in Enum.GetValues(typeof(InstrumentNumberEnum)))
+            foreach (InstrumentNumberEnum val in Enum.GetValues(typeof(OptionNumberEnum)))
             {
-                list.Add(new Instruments { exchangeSegment = (int)ExchangeSegmentEnum.NSECM, exchangeInstrumentID = (long)val });
+                list.Add(new Instruments { exchangeSegment = (int)ExchangeSegmentEnum.NSEFO, exchangeInstrumentID = (long)val });
             }
-           
+
 
             return list;
 
@@ -238,74 +220,5 @@ namespace SudhirTest.Services
             dateTime = dateTime.AddSeconds(unixTimeStamp).ToLocalTime();
             return dateTime.AddYears(10);
         }
-        public dynamic TestMethod()
-        {
-            
-            return true;
-        }
-        private void AddtoGoogleSheet(long LastTradedTime, double LastTradedPrice, long LastTradedQunatity)
-        {
-            GoogleCredential credential;
-            //Reading Credentials File...
-            var folderDetails = Path.Combine(Directory.GetCurrentDirectory(), $"wwwroot\\{"json\\app_client_secret.json"}");
-            using (var stream = new FileStream(folderDetails, FileMode.Open, FileAccess.Read))
-            {
-                credential = GoogleCredential.FromStream(stream)
-                    .CreateScoped(Scopes);
-            }
-
-            // Creating Google Sheets API service...
-            service = new SheetsService(new BaseClientService.Initializer()
-            {
-                HttpClientInitializer = credential,
-                ApplicationName = ApplicationName,
-            });
-            AddRow(LastTradedTime, LastTradedPrice, LastTradedQunatity);
-        }
-
-        private void AddRow(long LastTradedTime, double LastTradedPrice, long LastTradedQunatity)
-        {
-            DateTime tradedTime = UnixTimeStampToDateTime(LastTradedTime);
-            string range = $"{sheet}!A:C";
-
-            SpreadsheetsResource.ValuesResource.GetRequest request =
-            service.Spreadsheets.Values.Get(SpreadsheetId, range);
-            var response = request.Execute();
-
-            IList<IList<object>> values = response.Values;
-            if (values != null && values.Count > 1200)
-            {
-                Request RequestBody = new Request()
-                {
-                    DeleteDimension = new DeleteDimensionRequest()
-                    {
-                        Range = new DimensionRange()
-                        {
-                            SheetId = 0,
-                            Dimension = "ROWS",
-                            StartIndex = 0,
-                            EndIndex = 1
-                        }
-                    }
-                };
-
-                List<Request> RequestContainer = new List<Request>();
-                RequestContainer.Add(RequestBody);
-
-                BatchUpdateSpreadsheetRequest DeleteRequest = new BatchUpdateSpreadsheetRequest();
-                DeleteRequest.Requests = RequestContainer;
-
-                var req = service.Spreadsheets.BatchUpdate(DeleteRequest, SpreadsheetId);
-                req.Execute();
-            }
-           
-            var valueRange = new ValueRange();
-            var oblist = new List<object>() { tradedTime, LastTradedPrice, LastTradedQunatity };
-            valueRange.Values = new List<IList<object>> { oblist };
-            var appendRequest = service.Spreadsheets.Values.Append(valueRange, SpreadsheetId, range);
-            appendRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
-            appendRequest.Execute();
-        }
-
     }
 }
