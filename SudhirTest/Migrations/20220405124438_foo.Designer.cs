@@ -10,7 +10,7 @@ using SudhirTest.Data;
 namespace SudhirTest.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20220321212954_foo")]
+    [Migration("20220405124438_foo")]
     partial class foo
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -546,6 +546,263 @@ namespace SudhirTest.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("lt");
+                });
+
+            modelBuilder.Entity("SudhirTest.Entity.OptionIVCall", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<double>("IV")
+                        .HasColumnType("double precision")
+                        .HasColumnName("iv");
+
+                    b.Property<int>("StrikePrice")
+                        .HasColumnType("integer")
+                        .HasColumnName("strikeprice");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("optionivcall");
+                });
+
+            modelBuilder.Entity("SudhirTest.Entity.OptionIVPut", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<double>("IV")
+                        .HasColumnType("double precision")
+                        .HasColumnName("iv");
+
+                    b.Property<int>("StrikePrice")
+                        .HasColumnType("integer")
+                        .HasColumnName("strikeprice");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("optionivput");
+                });
+
+            modelBuilder.Entity("SudhirTest.Entity.OptionInstrument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<string>("Discription")
+                        .HasColumnType("text")
+                        .HasColumnName("discription");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("text")
+                        .HasColumnName("displayname");
+
+                    b.Property<long>("ExchangeInstrumentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("exchangeinstrumentid");
+
+                    b.Property<string>("Expiry")
+                        .HasColumnType("text")
+                        .HasColumnName("expiry");
+
+                    b.Property<string>("OptionType")
+                        .HasColumnType("text")
+                        .HasColumnName("optiontype");
+
+                    b.Property<int>("StrikePrice")
+                        .HasColumnType("integer")
+                        .HasColumnName("strikeprice");
+
+                    b.Property<string>("Symbol")
+                        .HasColumnType("text")
+                        .HasColumnName("symbol");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("optioninstrument");
+                });
+
+            modelBuilder.Entity("SudhirTest.Entity.OptionLtpCall", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("ExchangeInstrumentId")
+                        .HasColumnType("integer")
+                        .HasColumnName("exchangeinstrumentid");
+
+                    b.Property<double>("Ltp")
+                        .HasColumnType("double precision")
+                        .HasColumnName("ltp");
+
+                    b.Property<int>("StrikePrice")
+                        .HasColumnType("integer")
+                        .HasColumnName("strikeprice");
+
+                    b.Property<long>("Time")
+                        .HasColumnType("bigint")
+                        .HasColumnName("time");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("optionltpcall");
+                });
+
+            modelBuilder.Entity("SudhirTest.Entity.OptionLtpPut", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("ExchangeInstrumentId")
+                        .HasColumnType("integer")
+                        .HasColumnName("exchangeinstrumentid");
+
+                    b.Property<double>("Ltp")
+                        .HasColumnType("double precision")
+                        .HasColumnName("ltp");
+
+                    b.Property<int>("StrikePrice")
+                        .HasColumnType("integer")
+                        .HasColumnName("strikeprice");
+
+                    b.Property<long>("Time")
+                        .HasColumnType("bigint")
+                        .HasColumnName("time");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("optionltpput");
+                });
+
+            modelBuilder.Entity("SudhirTest.Entity.OptionLtqCall", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("ExchangeInstrumentId")
+                        .HasColumnType("integer")
+                        .HasColumnName("exchangeinstrumentid");
+
+                    b.Property<double>("Ltq")
+                        .HasColumnType("double precision")
+                        .HasColumnName("ltq");
+
+                    b.Property<int>("StrikePrice")
+                        .HasColumnType("integer")
+                        .HasColumnName("strikeprice");
+
+                    b.Property<long>("Time")
+                        .HasColumnType("bigint")
+                        .HasColumnName("time");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("optionltqcall");
+                });
+
+            modelBuilder.Entity("SudhirTest.Entity.OptionLtqPut", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("ExchangeInstrumentId")
+                        .HasColumnType("integer")
+                        .HasColumnName("exchangeinstrumentid");
+
+                    b.Property<double>("Ltq")
+                        .HasColumnType("double precision")
+                        .HasColumnName("ltq");
+
+                    b.Property<int>("StrikePrice")
+                        .HasColumnType("integer")
+                        .HasColumnName("strikeprice");
+
+                    b.Property<long>("Time")
+                        .HasColumnType("bigint")
+                        .HasColumnName("time");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("optionltqput");
+                });
+
+            modelBuilder.Entity("SudhirTest.Entity.OptionOICall", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("ExchangeInstrumentId")
+                        .HasColumnType("integer")
+                        .HasColumnName("exchangeinstrumentid");
+
+                    b.Property<double>("OI")
+                        .HasColumnType("double precision")
+                        .HasColumnName("oi");
+
+                    b.Property<int>("StrikePrice")
+                        .HasColumnType("integer")
+                        .HasColumnName("strikeprice");
+
+                    b.Property<long>("Time")
+                        .HasColumnType("bigint")
+                        .HasColumnName("time");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("optionoicall");
+                });
+
+            modelBuilder.Entity("SudhirTest.Entity.OptionOIPut", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("ExchangeInstrumentId")
+                        .HasColumnType("integer")
+                        .HasColumnName("exchangeinstrumentid");
+
+                    b.Property<double>("OI")
+                        .HasColumnType("double precision")
+                        .HasColumnName("oi");
+
+                    b.Property<int>("StrikePrice")
+                        .HasColumnType("integer")
+                        .HasColumnName("strikeprice");
+
+                    b.Property<long>("Time")
+                        .HasColumnType("bigint")
+                        .HasColumnName("time");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("optionoiput");
                 });
 
             modelBuilder.Entity("SudhirTest.Entity.Reliance", b =>

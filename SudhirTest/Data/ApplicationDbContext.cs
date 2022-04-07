@@ -62,6 +62,15 @@ namespace SudhirTest.Data
         public DbSet<Infy> Infy { get; set; }
         public DbSet<LT> LT { get; set; }
         public DbSet<KotakBank> KotakBank { get; set; }
+        public DbSet<OptionInstrument> OptionInstrument { get; set; }
+        public DbSet<OptionLtpCall> OptionLtpCall { get; set; }
+        public DbSet<OptionLtpPut> OptionLtpPut { get; set; }
+        public DbSet<OptionLtqCall> OptionLtqCall { get; set; }
+        public DbSet<OptionLtqPut> OptionLtqPut { get; set; }
+        public DbSet<OptionOICall> OptionOICall { get; set; }
+        public DbSet<OptionOIPut> OptionOIPut { get; set; }
+        public DbSet<OptionIVCall> OptionIVCall { get; set; }
+        public DbSet<OptionIVPut> OptionIVPut { get; set; }
 
     }
 }

@@ -66,7 +66,7 @@ namespace SudhirTest.Services
                 _httpClient.BaseAddress = new Uri(url);
                 _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                var response = await _httpClient.PostAsync(url + "/apimarketdata/auth/login", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
+                var response = await _httpClient.PostAsync(url + "/marketdata/auth/login", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
                 string str = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                 var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(str);
@@ -86,7 +86,7 @@ namespace SudhirTest.Services
            var socket = new SocketIO(Url, new SocketIOOptions
             {
                 EIO = 3,
-                Path = "/apimarketdata/socket.io",
+                Path = "/marketdata/socket.io",
                 Query = new Dictionary<string, string>()
                     {
                         { "token", token },
@@ -193,7 +193,7 @@ namespace SudhirTest.Services
                 xtsMessageCode = 1501
             };
 
-            var response = await _httpClient.PostAsync(@"/apimarketdata/instruments/subscription", payload?.GetHttpContent()).ConfigureAwait(false);
+            var response = await _httpClient.PostAsync(@"/marketdata/instruments/subscription", payload?.GetHttpContent()).ConfigureAwait(false);
 
             string txt;
 
@@ -247,7 +247,7 @@ namespace SudhirTest.Services
         {
             GoogleCredential credential;
             //Reading Credentials File...
-            var folderDetails = Path.Combine(Directory.GetCurrentDirectory(), $"wwwroot\\{"json\\app_client_secret.json"}");
+            string folderDetails = Path.Combine(Directory.GetCurrentDirectory(), $"wwwroot\\{"json\\app_client_secret.json"}");
             using (var stream = new FileStream(folderDetails, FileMode.Open, FileAccess.Read))
             {
                 credential = GoogleCredential.FromStream(stream)

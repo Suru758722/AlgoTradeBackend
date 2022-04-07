@@ -23,4 +23,5 @@ namespace SudhirTest.Model
         public int xtsMessageCode { get; set; }
 
     }
+   
 }

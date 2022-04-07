@@ -37,6 +37,8 @@ namespace SudhirTest
             services.AddScoped<ILiveChartService, LiveChartService>();
             services.AddScoped<IAnalysisService, AnalysisService>();
             services.AddHttpClient<IOptionService, OptionService>();
+            services.AddHttpClient<IIndexService, IndexService>();
+
             //        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             //.AddJwtBearer(options =>
             //{
@@ -55,7 +57,7 @@ namespace SudhirTest
             services.AddCors();
             services.AddSignalR();
             services.AddDotNetify();
-            //services.AddDbContext<ApplicationDbContext>(item => item.UseNpgsql(Configuration.GetConnectionString("connection")));
+            services.AddDbContext<ApplicationDbContext>(item => item.UseNpgsql(Configuration.GetConnectionString("connection")));
            
              services.AddDbContextFactory<ApplicationDbContext>(options =>
              options.UseNpgsql(Configuration.GetConnectionString("connection")),

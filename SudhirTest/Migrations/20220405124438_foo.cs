@@ -174,6 +174,149 @@ namespace SudhirTest.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "optioninstrument",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    exchangeinstrumentid = table.Column<long>(type: "bigint", nullable: false),
+                    strikeprice = table.Column<int>(type: "integer", nullable: false),
+                    symbol = table.Column<string>(type: "text", nullable: true),
+                    expiry = table.Column<string>(type: "text", nullable: true),
+                    optiontype = table.Column<string>(type: "text", nullable: true),
+                    discription = table.Column<string>(type: "text", nullable: true),
+                    displayname = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_optioninstrument", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "optionivcall",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    strikeprice = table.Column<int>(type: "integer", nullable: false),
+                    iv = table.Column<double>(type: "double precision", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_optionivcall", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "optionivput",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    strikeprice = table.Column<int>(type: "integer", nullable: false),
+                    iv = table.Column<double>(type: "double precision", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_optionivput", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "optionltpcall",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    time = table.Column<long>(type: "bigint", nullable: false),
+                    exchangeinstrumentid = table.Column<int>(type: "integer", nullable: false),
+                    ltp = table.Column<double>(type: "double precision", nullable: false),
+                    strikeprice = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_optionltpcall", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "optionltpput",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    exchangeinstrumentid = table.Column<int>(type: "integer", nullable: false),
+                    time = table.Column<long>(type: "bigint", nullable: false),
+                    ltp = table.Column<double>(type: "double precision", nullable: false),
+                    strikeprice = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_optionltpput", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "optionltqcall",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    exchangeinstrumentid = table.Column<int>(type: "integer", nullable: false),
+                    time = table.Column<long>(type: "bigint", nullable: false),
+                    ltq = table.Column<double>(type: "double precision", nullable: false),
+                    strikeprice = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_optionltqcall", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "optionltqput",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    exchangeinstrumentid = table.Column<int>(type: "integer", nullable: false),
+                    time = table.Column<long>(type: "bigint", nullable: false),
+                    ltq = table.Column<double>(type: "double precision", nullable: false),
+                    strikeprice = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_optionltqput", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "optionoicall",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    exchangeinstrumentid = table.Column<int>(type: "integer", nullable: false),
+                    time = table.Column<long>(type: "bigint", nullable: false),
+                    oi = table.Column<double>(type: "double precision", nullable: false),
+                    strikeprice = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_optionoicall", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "optionoiput",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    exchangeinstrumentid = table.Column<int>(type: "integer", nullable: false),
+                    time = table.Column<long>(type: "bigint", nullable: false),
+                    oi = table.Column<double>(type: "double precision", nullable: false),
+                    strikeprice = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_optionoiput", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "reliance",
                 columns: table => new
                 {
@@ -472,6 +615,33 @@ namespace SudhirTest.Migrations
 
             migrationBuilder.DropTable(
                 name: "lt");
+
+            migrationBuilder.DropTable(
+                name: "optioninstrument");
+
+            migrationBuilder.DropTable(
+                name: "optionivcall");
+
+            migrationBuilder.DropTable(
+                name: "optionivput");
+
+            migrationBuilder.DropTable(
+                name: "optionltpcall");
+
+            migrationBuilder.DropTable(
+                name: "optionltpput");
+
+            migrationBuilder.DropTable(
+                name: "optionltqcall");
+
+            migrationBuilder.DropTable(
+                name: "optionltqput");
+
+            migrationBuilder.DropTable(
+                name: "optionoicall");
+
+            migrationBuilder.DropTable(
+                name: "optionoiput");
 
             migrationBuilder.DropTable(
                 name: "reliance");
