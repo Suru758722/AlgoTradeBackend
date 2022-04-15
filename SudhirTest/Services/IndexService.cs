@@ -143,6 +143,16 @@ namespace SudhirTest.Services
         }
         public async Task SaveStrikePrices(string url, decimal niftyPrice)
         {
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetService<ApplicationDbContext>();
+                var list = db.OptionInstrument.ToList();
+                if (list.Count > 0)
+                {
+                    db.OptionInstrument.RemoveRange(list);
+                    db.SaveChanges();
+                }
+            }
             var expiryResponse = await _httpClient.GetAsync(url + "/marketdata/instruments/instrument/expiryDate?exchangeSegment=2&series=OPTIDX&symbol=Nifty").ConfigureAwait(false);
                 string strExpiry = await expiryResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 
@@ -152,19 +162,22 @@ namespace SudhirTest.Services
 
                 DateTime expiryDate = Convert.ToDateTime(expiryList.Result.FirstOrDefault());
                 string expiryDateString = expiryDate.ToString("dd MMM yyyy").Replace(" ", "");
-                List<StrikPriceModel> strikPrices = new List<StrikPriceModel>();
+                List<StrikPriceModel> strikPricesCall = new List<StrikPriceModel>();
+                List<StrikPriceModel> strikPricesPut = new List<StrikPriceModel>();
 
-                
-                for (int i = 0; i <= 10; i++)
+
+            for (int i = 0; i <= 10; i++)
                 {
-                    strikPrices.Add(new StrikPriceModel { OptionType = "CE", StrikePrice = ((int)(niftyPrice / 100)) * 100 + i * 100 });
+                strikPricesCall.Add(new StrikPriceModel { OptionType = "CE", StrikePrice = ((int)(niftyPrice / 100)) * 100 + i * 100 });
                 }
                 for (int i = 0; i <= 10; i++)
                 {
-                    strikPrices.Add(new StrikPriceModel { OptionType = "PE", StrikePrice = ((int)(niftyPrice / 100)) * 100 - i * 100 });
+                strikPricesCall.Add(new StrikPriceModel { OptionType = "CE", StrikePrice = ((int)(niftyPrice / 100)) * 100 - i * 100 });
                 }
 
-                foreach (var element in strikPrices)
+                strikPricesPut = strikPricesCall.Select(x => new StrikPriceModel { StrikePrice = x.StrikePrice, OptionType = "PE" }).ToList();
+                strikPricesCall.AddRange(strikPricesPut);
+                foreach (var element in strikPricesCall)
                 {
                     string optionUrl = url + "/marketdata/instruments/instrument/optionSymbol?exchangeSegment=2&series=OPTIDX&symbol=NIFTY&expiryDate=" + expiryDateString + "&optionType=" + element.OptionType + "&strikePrice=" + element.StrikePrice;
                     var strikePriceResponse = await _httpClient.GetAsync(optionUrl).ConfigureAwait(false);

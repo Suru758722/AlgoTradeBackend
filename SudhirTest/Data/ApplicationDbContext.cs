@@ -71,7 +71,7 @@ namespace SudhirTest.Data
         public DbSet<OptionOIPut> OptionOIPut { get; set; }
         public DbSet<OptionIVCall> OptionIVCall { get; set; }
         public DbSet<OptionIVPut> OptionIVPut { get; set; }
-
+        public DbSet<NiftyFut> NiftyFut { get; set; }
     }
 }
 

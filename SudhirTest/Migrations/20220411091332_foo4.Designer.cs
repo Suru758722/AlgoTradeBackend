@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SudhirTest.Data;
@@ -9,9 +10,10 @@ using SudhirTest.Data;
 namespace SudhirTest.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220411091332_foo4")]
+    partial class foo4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -570,13 +572,9 @@ namespace SudhirTest.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("lasttradedtime");
 
-                    b.Property<long>("OI")
+                    b.Property<long?>("OI")
                         .HasColumnType("bigint")
                         .HasColumnName("oi");
-
-                    b.Property<string>("TimeString")
-                        .HasColumnType("text")
-                        .HasColumnName("timestring");
 
                     b.HasKey("Id");
 

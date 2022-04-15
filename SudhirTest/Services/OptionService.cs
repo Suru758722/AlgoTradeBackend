@@ -164,7 +164,7 @@ namespace SudhirTest.Services
                         if (list.Count == 0)
                         {
                             string sqlQuery = "insert into optionltpcall(time,exchangeinstrumentid,ltp,strikeprice,timestring) values(" +
-                                    LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedPrice+","+ optionInsertModel.FirstOrDefault().StrikePrice+","+UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + ")";
+                                    LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedPrice+","+ optionInsertModel.FirstOrDefault().StrikePrice+",'"+UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + "')";
                             using (var command = new NpgsqlCommand(sqlQuery, con))
                             {
                                 command.ExecuteNonQuery();
@@ -177,7 +177,7 @@ namespace SudhirTest.Services
                             if (current != previous)
                             {
                                 string sqlQuery = "insert into optionltpcall(time,exchangeinstrumentid,ltp,strikeprice,timestring) values(" +
-                                      LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedPrice + "," + optionInsertModel.FirstOrDefault().StrikePrice + "," + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + ")";
+                                      LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedPrice + "," + optionInsertModel.FirstOrDefault().StrikePrice + ",'" + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + "')";
                                 using (var command = new NpgsqlCommand(sqlQuery, con))
                                 {
                                     command.ExecuteNonQuery();
@@ -205,7 +205,7 @@ namespace SudhirTest.Services
                         if (list.Count == 0)
                         {
                             string sqlQuery = "insert into optionltqcall(time,exchangeinstrumentid,ltq,strikeprice,timestring) values(" +
-                                    LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedQunatity + "," + optionInsertModel.FirstOrDefault().StrikePrice + "," + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + ")";
+                                    LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedQunatity + "," + optionInsertModel.FirstOrDefault().StrikePrice + ",'" + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + "')";
                             using (var command = new NpgsqlCommand(sqlQuery, con))
                             {
                                 command.ExecuteNonQuery();
@@ -218,7 +218,7 @@ namespace SudhirTest.Services
                             if (current != previous)
                             {
                                 string sqlQuery = "insert into optionltqcall(time,exchangeinstrumentid,ltq,strikeprice,timestring) values(" +
-                                      LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedQunatity + "," + optionInsertModel.FirstOrDefault().StrikePrice + "," + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + ")";
+                                      LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedQunatity + "," + optionInsertModel.FirstOrDefault().StrikePrice + ",'" + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + "')";
                                 using (var command = new NpgsqlCommand(sqlQuery, con))
                                 {
                                     command.ExecuteNonQuery();
@@ -251,7 +251,7 @@ namespace SudhirTest.Services
                         if (list.Count == 0)
                         {
                             string sqlQuery = "insert into optionoicall(time,exchangeinstrumentid,oi,strikeprice,timestring) values(" +
-                                    LastTradedTime + "," + ExchangeInstrumentID + "," + OI + "," + optionInsertModel.FirstOrDefault().StrikePrice + "," + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + ")";
+                                    LastTradedTime + "," + ExchangeInstrumentID + "," + OI + "," + optionInsertModel.FirstOrDefault().StrikePrice + ",'" + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + "')";
                             using (var command = new NpgsqlCommand(sqlQuery, con))
                             {
                                 command.ExecuteNonQuery();
@@ -264,7 +264,7 @@ namespace SudhirTest.Services
                             if (current != previous)
                             {
                                 string sqlQuery = "insert into optionoicall(time,exchangeinstrumentid,oi,strikeprice,timestring) values(" +
-                                      LastTradedTime + "," + ExchangeInstrumentID + "," + OI + "," + optionInsertModel.FirstOrDefault().StrikePrice + "," + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + ")";
+                                      LastTradedTime + "," + ExchangeInstrumentID + "," + OI + "," + optionInsertModel.FirstOrDefault().StrikePrice + ",'" + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + "')";
                                 using (var command = new NpgsqlCommand(sqlQuery, con))
                                 {
                                     command.ExecuteNonQuery();
@@ -298,7 +298,7 @@ namespace SudhirTest.Services
                         if (list.Count == 0)
                         {
                             string sqlQuery = "insert into optionltpput(time,exchangeinstrumentid,ltp,strikeprice,timestring) values(" +
-                                    LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedPrice + "," + optionInsertModel.FirstOrDefault().StrikePrice + "," + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + ")";
+                                    LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedPrice + "," + optionInsertModel.FirstOrDefault().StrikePrice + ",'" + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + "')";
                             using (var command = new NpgsqlCommand(sqlQuery, con))
                             {
                                 command.ExecuteNonQuery();
@@ -311,7 +311,7 @@ namespace SudhirTest.Services
                             if (current != previous)
                             {
                                 string sqlQuery = "insert into optionltpput(time,exchangeinstrumentid,ltp,strikeprice,timestring) values(" +
-                                      LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedPrice + "," + optionInsertModel.FirstOrDefault().StrikePrice + "," + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + ")";
+                                      LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedPrice + "," + optionInsertModel.FirstOrDefault().StrikePrice + ",'" + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + "')";
                                 using (var command = new NpgsqlCommand(sqlQuery, con))
                                 {
                                     command.ExecuteNonQuery();
@@ -339,7 +339,7 @@ namespace SudhirTest.Services
                         if (list.Count == 0)
                         {
                             string sqlQuery = "insert into optionltqput(time,exchangeinstrumentid,ltq,strikeprice,timestring) values(" +
-                                    LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedQunatity + "," + optionInsertModel.FirstOrDefault().StrikePrice + "," + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + ")";
+                                    LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedQunatity + "," + optionInsertModel.FirstOrDefault().StrikePrice + ",'" + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + "')";
                             using (var command = new NpgsqlCommand(sqlQuery, con))
                             {
                                 command.ExecuteNonQuery();
@@ -352,7 +352,7 @@ namespace SudhirTest.Services
                             if (current != previous)
                             {
                                 string sqlQuery = "insert into optionltqput(time,exchangeinstrumentid,ltq,strikeprice,timestring) values(" +
-                                      LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedQunatity + "," + optionInsertModel.FirstOrDefault().StrikePrice + "," + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + ")";
+                                      LastTradedTime + "," + ExchangeInstrumentID + "," + LastTradedQunatity + "," + optionInsertModel.FirstOrDefault().StrikePrice + ",'" + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + "')";
                                 using (var command = new NpgsqlCommand(sqlQuery, con))
                                 {
                                     command.ExecuteNonQuery();
@@ -385,7 +385,7 @@ namespace SudhirTest.Services
                         if (list.Count == 0)
                         {
                             string sqlQuery = "insert into optionoiput(time,exchangeinstrumentid,oi,strikeprice,timestring) values(" +
-                                    LastTradedTime + "," + ExchangeInstrumentID + "," + OI + "," + optionInsertModel.FirstOrDefault().StrikePrice + "," + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + ")";
+                                    LastTradedTime + "," + ExchangeInstrumentID + "," + OI + "," + optionInsertModel.FirstOrDefault().StrikePrice + ",'" + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + "')";
                             using (var command = new NpgsqlCommand(sqlQuery, con))
                             {
                                 command.ExecuteNonQuery();
@@ -398,7 +398,7 @@ namespace SudhirTest.Services
                             if (current != previous)
                             {
                                 string sqlQuery = "insert into optionoiput(time,exchangeinstrumentid,oi,strikeprice,timestring) values(" +
-                                      LastTradedTime + "," + ExchangeInstrumentID + "," + OI + "," + optionInsertModel.FirstOrDefault().StrikePrice + "," + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + ")";
+                                      LastTradedTime + "," + ExchangeInstrumentID + "," + OI + "," + optionInsertModel.FirstOrDefault().StrikePrice + ",'" + UnixTimeStampToDateTime(LastTradedTime).ToString("dd/MM/yyyy HH:mm") + "')";
                                 using (var command = new NpgsqlCommand(sqlQuery, con))
                                 {
                                     command.ExecuteNonQuery();

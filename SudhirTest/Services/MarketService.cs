@@ -106,7 +106,7 @@ namespace SudhirTest.Services
                     .Select(value => value.Split(':'))
                     .ToDictionary(pair => pair[0], pair => pair[1]);
                 var dico = keyValuePairs.ToList();
-                  StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]),Convert.ToInt64(dico.Where(x => x.Key == "ltt").FirstOrDefault().Value), Convert.ToDouble(dico.Where(x => x.Key == "ltp").FirstOrDefault().Value), Convert.ToInt64(dico.Where(x => x.Key == "ltq").FirstOrDefault().Value));
+                  StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]),Convert.ToInt64(dico.Where(x => x.Key == "ltt").FirstOrDefault().Value), Convert.ToDouble(dico.Where(x => x.Key == "ltp").FirstOrDefault().Value), Convert.ToInt64(dico.Where(x => x.Key == "ltq").FirstOrDefault().Value),0);
             });
                 socket.On("1501-json-full", response =>
             {
@@ -119,66 +119,134 @@ namespace SudhirTest.Services
                     MissingMemberHandling = Newtonsoft.Json.MissingMemberHandling.Ignore
                 });
                
-                StoreData(mdp.ExchangeInstrumentID,mdp.LastTradedTime,mdp.LastTradedPrice,mdp.LastTradedQunatity);
+                StoreData(mdp.ExchangeInstrumentID,mdp.LastTradedTime,mdp.LastTradedPrice,mdp.LastTradedQunatity,0);
                
             });
+            socket.On("1510-json-partial", response =>
+            {
 
+                var obj = response.GetValue().ToString();
+
+
+                Dictionary<string, string> keyValuePairs = obj.Split(',')
+                    .Select(value => value.Split(':'))
+                    .ToDictionary(pair => pair[0], pair => pair[1]);
+                var dico = keyValuePairs.ToList();
+                StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]), ToUnixTime(DateTime.Now), 0, 0, Convert.ToDouble(dico.Where(x => x.Key == "oi").FirstOrDefault().Value));
+
+            });
             await socket.ConnectAsync();
             await SubscribeAsync();
         }
-        private void StoreData(int ExchangeInstrumentID,long LastTradedTime,double LastTradedPrice,long LastTradedQunatity)
+        private void StoreData(int ExchangeInstrumentID,long LastTradedTime,double LastTradedPrice,long LastTradedQunatity,double OI)
         {
-           // DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0);
             string instrumentName = Enum.GetName(typeof(InstrumentNumberEnum), Convert.ToInt32(ExchangeInstrumentID));
-            //DateTime currentTime = new DateTime(LastTradedTime);  //dateTime.AddSeconds(Math.Round(LastTradedTime / 1000d)).ToLocalTime();
-            //DateTime tableTime;
             DataTable dataTable = new DataTable();
             List<InsertDataModel> list = new List<InsertDataModel>();
             string sql = "select * from " + instrumentName.ToLower() + " order by id desc fetch first 1 rows only";
             using (var con = new NpgsqlConnection(_config["ConnectionStrings:connection"]))
             {
                 con.Open();
-                using (var cmd = new NpgsqlCommand(sql, con))
-               {
-                   
-                    NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-                    da.Fill(dataTable);
-                    foreach (DataRow dr in dataTable.Rows)
-                    {
-                        list.Add(new InsertDataModel { LastTradedPrice = (double)dr.ItemArray[1],LastTradedTime = (long)dr.ItemArray[2]});
-                    }
 
-                }
-                if (list.Count == 0)
+                if (OI == 0)
                 {
-                    string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity) values(" +
-                            LastTradedPrice + "," + LastTradedTime + "," +
-                            ExchangeInstrumentID + "," + LastTradedQunatity + ")";
+                    if (ExchangeInstrumentID == (int)InstrumentNumberEnum.NIFTYFUT)
+                    {
+                        using (var cmd = new NpgsqlCommand(sql, con))
+                        {
+
+                            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
+                            da.Fill(dataTable);
+                            foreach (DataRow dr in dataTable.Rows)
+                            {
+                                list.Add(new InsertDataModel { LastTradedPrice = (double)dr.ItemArray[1], LastTradedTime = (long)dr.ItemArray[2] });
+                            }
+
+                        }
+                        if (list.Count == 0)
+                        {
+                            string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity,oi,timestring) values(" +
+                                    LastTradedPrice + "," + LastTradedTime + "," +
+                                    ExchangeInstrumentID + "," + LastTradedQunatity +",0,'"+ UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm") + "')";
+                            using (var command = new NpgsqlCommand(sqlQuery, con))
+                            {
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        else
+                        {
+                            string current = UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm");
+                            string previous = UnixTimeStampToDateTime(list.FirstOrDefault().LastTradedTime).ToString("HH:mm");
+
+                            if (current != previous)
+                            {
+                                string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity,oi,timestring) values(" +
+                                   LastTradedPrice + "," + LastTradedTime + "," +
+                                   ExchangeInstrumentID + "," + LastTradedQunatity + ",0,'" + UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm") + "')";
+                                using (var command = new NpgsqlCommand(sqlQuery, con))
+                                {
+                                    command.ExecuteNonQuery();
+                                }
+                                
+                            }
+                        }
+                    }
+                    else
+                    {
+                        using (var cmd = new NpgsqlCommand(sql, con))
+                        {
+
+                            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
+                            da.Fill(dataTable);
+                            foreach (DataRow dr in dataTable.Rows)
+                            {
+                                list.Add(new InsertDataModel { LastTradedPrice = (double)dr.ItemArray[1], LastTradedTime = (long)dr.ItemArray[2] });
+                            }
+
+                        }
+                        if (list.Count == 0)
+                        {
+                            string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity) values(" +
+                                    LastTradedPrice + "," + LastTradedTime + "," +
+                                    ExchangeInstrumentID + "," + LastTradedQunatity + ")";
+                            using (var command = new NpgsqlCommand(sqlQuery, con))
+                            {
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        else
+                        {
+                            string current = UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm");
+                            string previous = UnixTimeStampToDateTime(list.FirstOrDefault().LastTradedTime).ToString("HH:mm");
+
+                            if (current != previous)
+                            {
+                                string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity) values(" +
+                                        LastTradedPrice + "," + LastTradedTime + "," +
+                                        ExchangeInstrumentID + "," + LastTradedQunatity + ")";
+                                using (var command = new NpgsqlCommand(sqlQuery, con))
+                                {
+                                    command.ExecuteNonQuery();
+                                }
+                                //if (instrumentName.ToLower() == InstrumentNumberEnum.HDFC.ToString().ToLower())
+                                //{
+                                //    AddtoGoogleSheet(LastTradedTime, LastTradedPrice, LastTradedQunatity);
+                                //}
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                   
+                    string sqlQuery = "update " + instrumentName.ToLower() + " set oi=" + OI + " where oi = 0 and timestring='" + UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm")+"'";
                     using (var command = new NpgsqlCommand(sqlQuery, con))
                     {
                         command.ExecuteNonQuery();
                     }
                 }
-                else
-                {
-                    string current = UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm");
-                    string previous = UnixTimeStampToDateTime(list.FirstOrDefault().LastTradedTime).ToString("HH:mm");
 
-                    if (current != previous)
-                    {
-                        string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity) values(" +
-                                LastTradedPrice + "," + LastTradedTime + "," +
-                                ExchangeInstrumentID + "," + LastTradedQunatity + ")";
-                        using (var command = new NpgsqlCommand(sqlQuery, con))
-                        {
-                            command.ExecuteNonQuery();
-                        }
-                        if (instrumentName.ToLower() == InstrumentNumberEnum.HDFC.ToString().ToLower())
-                        {
-                            AddtoGoogleSheet(LastTradedTime, LastTradedPrice, LastTradedQunatity);
-                        }
-                    }
-                }
+
                 con.Close();
 
             }
@@ -186,14 +254,24 @@ namespace SudhirTest.Services
         }
         private async Task SubscribeAsync()
         {
-
-            SubscriptionPayload payload = new SubscriptionPayload()
+            List<Instruments> listOI = new List<Instruments>();
+            listOI.Add(new Instruments { exchangeSegment = (int)ExchangeSegmentEnum.NSEFO, exchangeInstrumentID = (int)InstrumentNumberEnum.NIFTYFUT });
+            SubscriptionPayload payload1 = new SubscriptionPayload()
             {
-                instruments = GetInstruments(MarketDataPorts),
+
+                    instruments = listOI,
+                xtsMessageCode = 1510
+            };
+
+            await _httpClient.PostAsync(@"/marketdata/instruments/subscription", payload1?.GetHttpContent()).ConfigureAwait(false);
+
+            SubscriptionPayload payload2 = new SubscriptionPayload()
+            {
+                instruments = GetInstruments(),
                 xtsMessageCode = 1501
             };
 
-            var response = await _httpClient.PostAsync(@"/marketdata/instruments/subscription", payload?.GetHttpContent()).ConfigureAwait(false);
+            var response = await _httpClient.PostAsync(@"/marketdata/instruments/subscription", payload2?.GetHttpContent()).ConfigureAwait(false);
 
             string txt;
 
@@ -204,7 +282,7 @@ namespace SudhirTest.Services
 
 
         }
-        private List<Instruments> GetInstruments(MarketDataPorts port)
+        private List<Instruments> GetInstruments()
         {
 
             //int exchange = (int)ExchangeSegment.MCXFO;
@@ -224,9 +302,17 @@ namespace SudhirTest.Services
 
             foreach (InstrumentNumberEnum val in Enum.GetValues(typeof(InstrumentNumberEnum)))
             {
-                list.Add(new Instruments { exchangeSegment = (int)ExchangeSegmentEnum.NSECM, exchangeInstrumentID = (long)val });
+                if (val.ToString() == "NIFTYFUT")
+                {
+                    list.Add(new Instruments { exchangeSegment = (int)ExchangeSegmentEnum.NSEFO, exchangeInstrumentID = (long)val });
+                }
+                else
+                {
+                    list.Add(new Instruments { exchangeSegment = (int)ExchangeSegmentEnum.NSECM, exchangeInstrumentID = (long)val });
+
+                }
             }
-           
+
 
             return list;
 
@@ -236,7 +322,15 @@ namespace SudhirTest.Services
             // Unix timestamp is seconds past epoch
             DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Local);
             dateTime = dateTime.AddSeconds(unixTimeStamp).ToLocalTime();
-            return dateTime.AddYears(10);
+             if (dateTime.Year == 2012)
+                return dateTime.AddYears(10);
+            else
+                return dateTime;
+        }
+        public long ToUnixTime(DateTime date)
+        {
+            var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            return Convert.ToInt64((date - epoch).TotalSeconds);
         }
         public dynamic TestMethod()
         {
