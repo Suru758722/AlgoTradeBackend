@@ -1,28 +1,18 @@
-﻿using Newtonsoft.Json;
-using SudhirTest.Data;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Npgsql;
+using SocketIOClient;
 using SudhirTest.Model;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reactive.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using SocketIOClient;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using SudhirTest.Entity;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Data.SqlClient;
-using System.Data;
-using Npgsql;
-using Google.Apis.Sheets.v4;
-using Google.Apis.Auth.OAuth2;
-using System.IO;
-using Google.Apis.Services;
-using Google.Apis.Sheets.v4.Data;
 
 namespace SudhirTest.Services
 {
@@ -30,20 +20,18 @@ namespace SudhirTest.Services
     {
         Task<dynamic> SaveMarketDataAsync();
         dynamic TestMethod();
+        Task<dynamic> StopStock();
+
     }
     public class MarketService : IMarketService
     {
         private readonly IConfiguration _config;
         private readonly HttpClient _httpClient;
         private readonly IServiceScopeFactory _scopeFactory;
-        static readonly string[] Scopes = { SheetsService.Scope.Spreadsheets };
-        static readonly string ApplicationName = "TestDotnet";
-        static readonly string sheet = "Sheet1";
-        static readonly string SpreadsheetId = "1W0I_bfWuRED_p6pOs6ROCKhS3soMiDsGm2RtPNbTacE";
-        static SheetsService service;
+
         public MarketDataPorts MarketDataPorts { get; set; } = MarketDataPorts.marketDepthEvent;
 
-        public MarketService(IConfiguration config,IServiceScopeFactory scopeFactory, HttpClient httpClient)
+        public MarketService(IConfiguration config, IServiceScopeFactory scopeFactory, HttpClient httpClient)
         {
             _scopeFactory = scopeFactory;
             _httpClient = httpClient;
@@ -54,9 +42,9 @@ namespace SudhirTest.Services
         {
             try
             {
-                 string url = _config["Xts:BaseUrl"];
-                 string appKey = _config["Xts:AppKey"];
-                 string secret = _config["Xts:Secret"];
+                string url = _config["Xts:BaseUrl"];
+                string appKey = _config["Xts:AppKey"];
+                string secret = _config["Xts:Secret"];
                 var payload = new
                 {
                     appKey = appKey,
@@ -70,20 +58,20 @@ namespace SudhirTest.Services
                 string str = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                 var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(str);
-                CancellationToken cancellationToken = new CancellationToken();
-                await GetSocketData(url, loginResponse.Result.token, _httpClient, cancellationToken);
+                await GetSocketData(url, loginResponse.Result.token, _httpClient, false);
                 return true;
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
-                return ex;
+                return false;
             }
 
         }
-        private async Task GetSocketData(string Url, string token,HttpClient _httpClient,CancellationToken cancellationToken)
+        private async Task GetSocketData(string Url, string token, HttpClient _httpClient, bool closeSocket)
         {
             _httpClient.DefaultRequestHeaders.Add("authorization", token);
             string USER_ID = "JHS04";
-           var socket = new SocketIO(Url, new SocketIOOptions
+            var socket = new SocketIO(Url, new SocketIOOptions
             {
                 EIO = 3,
                 Path = "/marketdata/socket.io",
@@ -96,8 +84,9 @@ namespace SudhirTest.Services
                         { "broadcastMode", "Partial" }
                     }
             });
-
-            socket.On("1501-json-partial", response =>
+            if (!closeSocket)
+            {
+                socket.On("1501-json-partial", response =>
             {
                 var obj = response.GetValue();
                 string mdp = obj.ToString();
@@ -106,7 +95,7 @@ namespace SudhirTest.Services
                     .Select(value => value.Split(':'))
                     .ToDictionary(pair => pair[0], pair => pair[1]);
                 var dico = keyValuePairs.ToList();
-                  StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]),Convert.ToInt64(dico.Where(x => x.Key == "ltt").FirstOrDefault().Value), Convert.ToDouble(dico.Where(x => x.Key == "ltp").FirstOrDefault().Value), Convert.ToInt64(dico.Where(x => x.Key == "ltq").FirstOrDefault().Value),0);
+                StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]), Convert.ToInt64(dico.Where(x => x.Key == "ltt").FirstOrDefault().Value), Convert.ToDouble(dico.Where(x => x.Key == "ltp").FirstOrDefault().Value), Convert.ToInt64(dico.Where(x => x.Key == "ltq").FirstOrDefault().Value), 0);
             });
                 socket.On("1501-json-full", response =>
             {
@@ -118,27 +107,20 @@ namespace SudhirTest.Services
                     NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
                     MissingMemberHandling = Newtonsoft.Json.MissingMemberHandling.Ignore
                 });
-               
-                StoreData(mdp.ExchangeInstrumentID,mdp.LastTradedTime,mdp.LastTradedPrice,mdp.LastTradedQunatity,0);
-               
+
+                StoreData(mdp.ExchangeInstrumentID, mdp.LastTradedTime, mdp.LastTradedPrice, mdp.LastTradedQunatity, 0);
+
             });
-            socket.On("1510-json-partial", response =>
+
+                await socket.ConnectAsync();
+                await SubscribeAsync();
+            }
+            if (closeSocket)
             {
-
-                var obj = response.GetValue().ToString();
-
-
-                Dictionary<string, string> keyValuePairs = obj.Split(',')
-                    .Select(value => value.Split(':'))
-                    .ToDictionary(pair => pair[0], pair => pair[1]);
-                var dico = keyValuePairs.ToList();
-                StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]), ToUnixTime(DateTime.Now), 0, 0, Convert.ToDouble(dico.Where(x => x.Key == "oi").FirstOrDefault().Value));
-
-            });
-            await socket.ConnectAsync();
-            await SubscribeAsync();
+                await socket.DisconnectAsync();
+            }
         }
-        private void StoreData(int ExchangeInstrumentID,long LastTradedTime,double LastTradedPrice,long LastTradedQunatity,double OI)
+        private void StoreData(int ExchangeInstrumentID, long LastTradedTime, double LastTradedPrice, long LastTradedQunatity, double OI)
         {
             string instrumentName = Enum.GetName(typeof(InstrumentNumberEnum), Convert.ToInt32(ExchangeInstrumentID));
             DataTable dataTable = new DataTable();
@@ -148,130 +130,62 @@ namespace SudhirTest.Services
             {
                 con.Open();
 
-                if (OI == 0)
+                using (var cmd = new NpgsqlCommand(sql, con))
                 {
-                    if (ExchangeInstrumentID == (int)InstrumentNumberEnum.NIFTYFUT)
+
+                    NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
+                    da.Fill(dataTable);
+                    foreach (DataRow dr in dataTable.Rows)
                     {
-                        using (var cmd = new NpgsqlCommand(sql, con))
-                        {
-
-                            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-                            da.Fill(dataTable);
-                            foreach (DataRow dr in dataTable.Rows)
-                            {
-                                list.Add(new InsertDataModel { LastTradedPrice = (double)dr.ItemArray[1], LastTradedTime = (long)dr.ItemArray[2] });
-                            }
-
-                        }
-                        if (list.Count == 0)
-                        {
-                            string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity,oi,timestring) values(" +
-                                    LastTradedPrice + "," + LastTradedTime + "," +
-                                    ExchangeInstrumentID + "," + LastTradedQunatity +",0,'"+ UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm") + "')";
-                            using (var command = new NpgsqlCommand(sqlQuery, con))
-                            {
-                                command.ExecuteNonQuery();
-                            }
-                        }
-                        else
-                        {
-                            string current = UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm");
-                            string previous = UnixTimeStampToDateTime(list.FirstOrDefault().LastTradedTime).ToString("HH:mm");
-
-                            if (current != previous)
-                            {
-                                string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity,oi,timestring) values(" +
-                                   LastTradedPrice + "," + LastTradedTime + "," +
-                                   ExchangeInstrumentID + "," + LastTradedQunatity + ",0,'" + UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm") + "')";
-                                using (var command = new NpgsqlCommand(sqlQuery, con))
-                                {
-                                    command.ExecuteNonQuery();
-                                }
-                                
-                            }
-                        }
+                        list.Add(new InsertDataModel { LastTradedPrice = (double)dr.ItemArray[1], LastTradedTime = (long)dr.ItemArray[2] });
                     }
-                    else
-                    {
-                        using (var cmd = new NpgsqlCommand(sql, con))
-                        {
 
-                            NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd);
-                            da.Fill(dataTable);
-                            foreach (DataRow dr in dataTable.Rows)
-                            {
-                                list.Add(new InsertDataModel { LastTradedPrice = (double)dr.ItemArray[1], LastTradedTime = (long)dr.ItemArray[2] });
-                            }
-
-                        }
-                        if (list.Count == 0)
-                        {
-                            string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity) values(" +
-                                    LastTradedPrice + "," + LastTradedTime + "," +
-                                    ExchangeInstrumentID + "," + LastTradedQunatity + ")";
-                            using (var command = new NpgsqlCommand(sqlQuery, con))
-                            {
-                                command.ExecuteNonQuery();
-                            }
-                        }
-                        else
-                        {
-                            string current = UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm");
-                            string previous = UnixTimeStampToDateTime(list.FirstOrDefault().LastTradedTime).ToString("HH:mm");
-
-                            if (current != previous)
-                            {
-                                string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity) values(" +
-                                        LastTradedPrice + "," + LastTradedTime + "," +
-                                        ExchangeInstrumentID + "," + LastTradedQunatity + ")";
-                                using (var command = new NpgsqlCommand(sqlQuery, con))
-                                {
-                                    command.ExecuteNonQuery();
-                                }
-                                //if (instrumentName.ToLower() == InstrumentNumberEnum.HDFC.ToString().ToLower())
-                                //{
-                                //    AddtoGoogleSheet(LastTradedTime, LastTradedPrice, LastTradedQunatity);
-                                //}
-                            }
-                        }
-                    }
                 }
-                else
+                if (list.Count == 0)
                 {
-                   
-                    string sqlQuery = "update " + instrumentName.ToLower() + " set oi=" + OI + " where oi = 0 and timestring='" + UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm")+"'";
+                    string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity) values(" +
+                            LastTradedPrice + "," + LastTradedTime + "," +
+                            ExchangeInstrumentID + "," + LastTradedQunatity + ")";
                     using (var command = new NpgsqlCommand(sqlQuery, con))
                     {
                         command.ExecuteNonQuery();
                     }
                 }
+                else
+                {
+                    string current = UnixTimeStampToDateTime(LastTradedTime).ToString("HH:mm");
+                    string previous = UnixTimeStampToDateTime(list.FirstOrDefault().LastTradedTime).ToString("HH:mm");
+
+                    if (current != previous)
+                    {
+                        string sqlQuery = "insert into " + instrumentName.ToLower() + "(lasttradedprice,lasttradedtime,exchangeinstrumentid,lasttradedqunatity) values(" +
+                                LastTradedPrice + "," + LastTradedTime + "," +
+                                ExchangeInstrumentID + "," + LastTradedQunatity + ")";
+                        using (var command = new NpgsqlCommand(sqlQuery, con))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+
+                    }
+                }
+
 
 
                 con.Close();
 
             }
-            
+
         }
         private async Task SubscribeAsync()
         {
-            List<Instruments> listOI = new List<Instruments>();
-            listOI.Add(new Instruments { exchangeSegment = (int)ExchangeSegmentEnum.NSEFO, exchangeInstrumentID = (int)InstrumentNumberEnum.NIFTYFUT });
-            SubscriptionPayload payload1 = new SubscriptionPayload()
-            {
 
-                    instruments = listOI,
-                xtsMessageCode = 1510
-            };
-
-            await _httpClient.PostAsync(@"/marketdata/instruments/subscription", payload1?.GetHttpContent()).ConfigureAwait(false);
-
-            SubscriptionPayload payload2 = new SubscriptionPayload()
+            SubscriptionPayload payload = new SubscriptionPayload()
             {
                 instruments = GetInstruments(),
                 xtsMessageCode = 1501
             };
 
-            var response = await _httpClient.PostAsync(@"/marketdata/instruments/subscription", payload2?.GetHttpContent()).ConfigureAwait(false);
+            var response = await _httpClient.PostAsync(@"/marketdata/instruments/subscription", payload?.GetHttpContent()).ConfigureAwait(false);
 
             string txt;
 
@@ -285,32 +199,14 @@ namespace SudhirTest.Services
         private List<Instruments> GetInstruments()
         {
 
-            //int exchange = (int)ExchangeSegment.MCXFO;
-            //int exchange = 1;
-            //long exchangeInstrumentId = 22;   //reliance
 
-            //if (this.MarketDataPorts == MarketDataPorts.openInterestEvent)
-            //{
-            //    exchange = (int)ExchangeSegmentEnum.NSEFO;
-            //    exchangeInstrumentId = 45042; //nifty sep 19 fut
-            //}
-            //else if (this.MarketDataPorts == MarketDataPorts.indexDataEvent)
-            //{
-            //    exchangeInstrumentId = 1;
-            //}
             List<Instruments> list = new List<Instruments>();
 
             foreach (InstrumentNumberEnum val in Enum.GetValues(typeof(InstrumentNumberEnum)))
             {
-                if (val.ToString() == "NIFTYFUT")
-                {
-                    list.Add(new Instruments { exchangeSegment = (int)ExchangeSegmentEnum.NSEFO, exchangeInstrumentID = (long)val });
-                }
-                else
-                {
-                    list.Add(new Instruments { exchangeSegment = (int)ExchangeSegmentEnum.NSECM, exchangeInstrumentID = (long)val });
 
-                }
+                list.Add(new Instruments { exchangeSegment = (int)ExchangeSegmentEnum.NSECM, exchangeInstrumentID = (long)val });
+
             }
 
 
@@ -322,7 +218,7 @@ namespace SudhirTest.Services
             // Unix timestamp is seconds past epoch
             DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Local);
             dateTime = dateTime.AddSeconds(unixTimeStamp).ToLocalTime();
-             if (dateTime.Year == 2012)
+            if (dateTime.Year == 2012)
                 return dateTime.AddYears(10);
             else
                 return dateTime;
@@ -334,72 +230,100 @@ namespace SudhirTest.Services
         }
         public dynamic TestMethod()
         {
-            
+
             return true;
         }
-        private void AddtoGoogleSheet(long LastTradedTime, double LastTradedPrice, long LastTradedQunatity)
+        //private void AddtoGoogleSheet(long LastTradedTime, double LastTradedPrice, long LastTradedQunatity)
+        //{
+        //    GoogleCredential credential;
+        //    //Reading Credentials File...
+        //    string folderDetails = Path.Combine(Directory.GetCurrentDirectory(), $"wwwroot\\{"json\\app_client_secret.json"}");
+        //    using (var stream = new FileStream(folderDetails, FileMode.Open, FileAccess.Read))
+        //    {
+        //        credential = GoogleCredential.FromStream(stream)
+        //            .CreateScoped(Scopes);
+        //    }
+
+        //    // Creating Google Sheets API service...
+        //    service = new SheetsService(new BaseClientService.Initializer()
+        //    {
+        //        HttpClientInitializer = credential,
+        //        ApplicationName = ApplicationName,
+        //    });
+        //   // AddRow(LastTradedTime, LastTradedPrice, LastTradedQunatity);
+        //}
+
+        //private void AddRow(long LastTradedTime, double LastTradedPrice, long LastTradedQunatity)
+        //{
+        //    DateTime tradedTime = UnixTimeStampToDateTime(LastTradedTime);
+        //    string range = $"{sheet}!A:C";
+
+        //    SpreadsheetsResource.ValuesResource.GetRequest request =
+        //    service.Spreadsheets.Values.Get(SpreadsheetId, range);
+        //    var response = request.Execute();
+
+        //    IList<IList<object>> values = response.Values;
+        //    if (values != null && values.Count > 1200)
+        //    {
+        //        Request RequestBody = new Request()
+        //        {
+        //            DeleteDimension = new DeleteDimensionRequest()
+        //            {
+        //                Range = new DimensionRange()
+        //                {
+        //                    SheetId = 0,
+        //                    Dimension = "ROWS",
+        //                    StartIndex = 0,
+        //                    EndIndex = 1
+        //                }
+        //            }
+        //        };
+
+        //        List<Request> RequestContainer = new List<Request>();
+        //        RequestContainer.Add(RequestBody);
+
+        //        BatchUpdateSpreadsheetRequest DeleteRequest = new BatchUpdateSpreadsheetRequest();
+        //        DeleteRequest.Requests = RequestContainer;
+
+        //        var req = service.Spreadsheets.BatchUpdate(DeleteRequest, SpreadsheetId);
+        //        req.Execute();
+        //    }
+
+        //    var valueRange = new ValueRange();
+        //    var oblist = new List<object>() { tradedTime, LastTradedPrice, LastTradedQunatity };
+        //    valueRange.Values = new List<IList<object>> { oblist };
+        //    var appendRequest = service.Spreadsheets.Values.Append(valueRange, SpreadsheetId, range);
+        //    appendRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
+        //    appendRequest.Execute();
+        //}
+
+        public async Task<dynamic> StopStock()
         {
-            GoogleCredential credential;
-            //Reading Credentials File...
-            string folderDetails = Path.Combine(Directory.GetCurrentDirectory(), $"wwwroot\\{"json\\app_client_secret.json"}");
-            using (var stream = new FileStream(folderDetails, FileMode.Open, FileAccess.Read))
+            try
             {
-                credential = GoogleCredential.FromStream(stream)
-                    .CreateScoped(Scopes);
-            }
-
-            // Creating Google Sheets API service...
-            service = new SheetsService(new BaseClientService.Initializer()
-            {
-                HttpClientInitializer = credential,
-                ApplicationName = ApplicationName,
-            });
-            AddRow(LastTradedTime, LastTradedPrice, LastTradedQunatity);
-        }
-
-        private void AddRow(long LastTradedTime, double LastTradedPrice, long LastTradedQunatity)
-        {
-            DateTime tradedTime = UnixTimeStampToDateTime(LastTradedTime);
-            string range = $"{sheet}!A:C";
-
-            SpreadsheetsResource.ValuesResource.GetRequest request =
-            service.Spreadsheets.Values.Get(SpreadsheetId, range);
-            var response = request.Execute();
-
-            IList<IList<object>> values = response.Values;
-            if (values != null && values.Count > 1200)
-            {
-                Request RequestBody = new Request()
+                string url = _config["Xts:BaseUrl"];
+                string appKey = _config["Xts:AppKey"];
+                string secret = _config["Xts:Secret"];
+                var payload = new
                 {
-                    DeleteDimension = new DeleteDimensionRequest()
-                    {
-                        Range = new DimensionRange()
-                        {
-                            SheetId = 0,
-                            Dimension = "ROWS",
-                            StartIndex = 0,
-                            EndIndex = 1
-                        }
-                    }
+                    appKey = appKey,
+                    secretKey = secret,
+                    source = "WEBAPI"
                 };
+                _httpClient.BaseAddress = new Uri(url);
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var response = await _httpClient.PostAsync(url + "/marketdata/auth/login", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
+                string str = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                List<Request> RequestContainer = new List<Request>();
-                RequestContainer.Add(RequestBody);
-
-                BatchUpdateSpreadsheetRequest DeleteRequest = new BatchUpdateSpreadsheetRequest();
-                DeleteRequest.Requests = RequestContainer;
-
-                var req = service.Spreadsheets.BatchUpdate(DeleteRequest, SpreadsheetId);
-                req.Execute();
+                var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(str);
+                await GetSocketData(url, loginResponse.Result.token, _httpClient, true);
+                return true;
             }
-           
-            var valueRange = new ValueRange();
-            var oblist = new List<object>() { tradedTime, LastTradedPrice, LastTradedQunatity };
-            valueRange.Values = new List<IList<object>> { oblist };
-            var appendRequest = service.Spreadsheets.Values.Append(valueRange, SpreadsheetId, range);
-            appendRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
-            appendRequest.Execute();
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
-
     }
 }

@@ -24,13 +24,18 @@ namespace SudhirTest.Controller
 
         [HttpGet]
         [Route("SaveOptionData")]
-        public async Task<IActionResult> SaveOptionData()
+        public async Task<bool> SaveOptionData()
         {
 
-            await _optionService.SaveOptionData();
-            return Ok();
+          return  await _optionService.SaveOptionData();
         }
+        [HttpGet]
+        [Route("StopOption")]
+        public async Task<bool> StopOption()
+        {
 
+         return  await _optionService.StopOption();
+        }
     }
 
 }

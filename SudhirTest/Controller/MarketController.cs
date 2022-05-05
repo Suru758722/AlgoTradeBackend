@@ -33,11 +33,10 @@ namespace SudhirTest.Controller
 
         [HttpGet]
         [Route("GetMarketData")]
-        public async Task<IActionResult> GetMarketDataAsync()
+        public async Task<bool> GetMarketData()
         {
            
-            await _marketService.SaveMarketDataAsync();
-            return Ok();
+            return await _marketService.SaveMarketDataAsync();
         }
         [HttpGet]
         [Route("TestMethod")]
@@ -48,5 +47,12 @@ namespace SudhirTest.Controller
             return Ok();
         }
 
+        [HttpGet]
+        [Route("StopStock")]
+        public async Task<bool> StopStock()
+        {
+
+            return await _marketService.StopStock();
+        }
     }
 }

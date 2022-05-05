@@ -113,7 +113,6 @@ namespace SudhirTest.Model
         //LT = 11483,
         //SBIN = 3045,
         //HINDUNILVR = 1394,
-        NIFTYFUT = 35079
     }
 
     public enum OptionNumberEnum

@@ -25,6 +25,8 @@ namespace SudhirTest.Services
     public interface IOptionService
     {
         Task<dynamic> SaveOptionData();
+        Task<dynamic> StopOption();
+
     }
     public class OptionService : IOptionService
     {
@@ -60,17 +62,16 @@ namespace SudhirTest.Services
                 string str = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                 var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(str);
-                CancellationToken cancellationToken = new CancellationToken();
-                await GetSocketData(url, loginResponse.Result.token, _httpClient, cancellationToken);
+                await GetSocketData(url, loginResponse.Result.token, _httpClient, false);
                 return true;
             }
             catch (Exception ex)
             {
-                return ex;
+                return false;
             }
 
         }
-        private async Task GetSocketData(string Url, string token, HttpClient _httpClient, CancellationToken cancellationToken)
+        private async Task GetSocketData(string Url, string token, HttpClient _httpClient, bool closeSocket)
         {
             _httpClient.DefaultRequestHeaders.Add("authorization", token);
             string USER_ID = "JHS04";
@@ -87,35 +88,43 @@ namespace SudhirTest.Services
                         { "broadcastMode", "Partial" }
                     }
             });
-
-            socket.On("1501-json-partial", response =>
+            if (!closeSocket)
             {
-                var obj = response.GetValue();
-                string mdp = obj.ToString();
-
-                Dictionary<string, string> keyValuePairs = mdp.Split(',')
-                    .Select(value => value.Split(':'))
-                    .ToDictionary(pair => pair[0], pair => pair[1]);
-                var dico = keyValuePairs.ToList();
-                StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]), Convert.ToInt64(dico.Where(x => x.Key == "ltt").FirstOrDefault().Value), Convert.ToDouble(dico.Where(x => x.Key == "ltp").FirstOrDefault().Value), Convert.ToInt64(dico.Where(x => x.Key == "ltq").FirstOrDefault().Value), 0);
-
-            });
-            socket.On("1510-json-partial", response =>
-            {
-
-                var obj = response.GetValue().ToString();
-
                
-                Dictionary<string, string> keyValuePairs = obj.Split(',')
-                    .Select(value => value.Split(':'))
-                    .ToDictionary(pair => pair[0], pair => pair[1]);
-                var dico = keyValuePairs.ToList();
-                StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]), ToUnixTime(DateTime.Now), 0, 0, Convert.ToDouble(dico.Where(x => x.Key == "oi").FirstOrDefault().Value));
 
-            });
-           
-            await socket.ConnectAsync();
-            await SubscribeAsync();
+                socket.On("1501-json-partial", response =>
+                {
+                    var obj = response.GetValue();
+                    string mdp = obj.ToString();
+
+                    Dictionary<string, string> keyValuePairs = mdp.Split(',')
+                        .Select(value => value.Split(':'))
+                        .ToDictionary(pair => pair[0], pair => pair[1]);
+                    var dico = keyValuePairs.ToList();
+                    StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]), Convert.ToInt64(dico.Where(x => x.Key == "ltt").FirstOrDefault().Value), Convert.ToDouble(dico.Where(x => x.Key == "ltp").FirstOrDefault().Value), Convert.ToInt64(dico.Where(x => x.Key == "ltq").FirstOrDefault().Value), 0);
+
+                });
+                socket.On("1510-json-partial", response =>
+                {
+
+                    var obj = response.GetValue().ToString();
+
+
+                    Dictionary<string, string> keyValuePairs = obj.Split(',')
+                        .Select(value => value.Split(':'))
+                        .ToDictionary(pair => pair[0], pair => pair[1]);
+                    var dico = keyValuePairs.ToList();
+                    StoreData(Convert.ToInt32(dico.Where(x => x.Key == "t").FirstOrDefault().Value.Split("_")[1]), ToUnixTime(DateTime.Now), 0, 0, Convert.ToDouble(dico.Where(x => x.Key == "oi").FirstOrDefault().Value));
+
+                });
+
+                await socket.ConnectAsync();
+                await SubscribeAsync();
+            }
+            if (closeSocket)
+            {
+                await socket.DisconnectAsync();
+            }
         }
         private void StoreData(int ExchangeInstrumentID, long LastTradedTime, double LastTradedPrice, long LastTradedQunatity,double OI)
         {
@@ -417,7 +426,7 @@ namespace SudhirTest.Services
 
             SubscriptionPayload payload = new SubscriptionPayload()
             {
-                instruments = GetInstruments(MarketDataPorts),
+                instruments = GetInstruments(),
                 xtsMessageCode = 1510
             };
 
@@ -425,13 +434,13 @@ namespace SudhirTest.Services
 
              payload = new SubscriptionPayload()
             {
-                instruments = GetInstruments(MarketDataPorts),
+                instruments = GetInstruments(),
                 xtsMessageCode = 1501
             };
             await _httpClient.PostAsync(@"/marketdata/instruments/subscription", payload?.GetHttpContent()).ConfigureAwait(false);
 
         }
-        private List<Instruments> GetInstruments(MarketDataPorts port)
+        private List<Instruments> GetInstruments()
         {
 
             List<Instruments> list = new List<Instruments>();
@@ -465,6 +474,36 @@ namespace SudhirTest.Services
         {
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return Convert.ToInt64((date - epoch).TotalSeconds);
+        }
+
+        public async Task<dynamic> StopOption()
+        {
+            try
+            {
+                string url = _config["Xts:BaseUrl"];
+                string appKey = _config["Xts:AppKey"];
+                string secret = _config["Xts:Secret"];
+                var payload = new
+                {
+                    appKey = appKey,
+                    secretKey = secret,
+                    source = "WEBAPI"
+                };
+                _httpClient.BaseAddress = new Uri(url);
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var response = await _httpClient.PostAsync(url + "/marketdata/auth/login", new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
+                string str = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(str);
+                await GetSocketData(url, loginResponse.Result.token, _httpClient, true);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
     }
 }

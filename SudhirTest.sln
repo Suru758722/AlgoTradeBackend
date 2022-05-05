@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.32106.194
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SudhirTest", "SudhirTest\SudhirTest.csproj", "{1A1A9AE1-9214-4534-8A9E-7367C991FEAB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SudhirTest", "SudhirTest\SudhirTest.csproj", "{1A1A9AE1-9214-4534-8A9E-7367C991FEAB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ControlPanel", "ControlPanel\ControlPanel.csproj", "{A9F06597-F999-4247-B65F-6B613A12260F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{1A1A9AE1-9214-4534-8A9E-7367C991FEAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A1A9AE1-9214-4534-8A9E-7367C991FEAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A1A9AE1-9214-4534-8A9E-7367C991FEAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9F06597-F999-4247-B65F-6B613A12260F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9F06597-F999-4247-B65F-6B613A12260F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9F06597-F999-4247-B65F-6B613A12260F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9F06597-F999-4247-B65F-6B613A12260F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

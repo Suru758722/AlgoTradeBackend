@@ -72,6 +72,13 @@ namespace SudhirTest.Data
         public DbSet<OptionIVCall> OptionIVCall { get; set; }
         public DbSet<OptionIVPut> OptionIVPut { get; set; }
         public DbSet<NiftyFut> NiftyFut { get; set; }
+        public DbSet<FutureInstrument> FutureInstrument { get; set; }
+        public DbSet<OptionLtpCallWeekly> OptionLtpCallWeekly { get; set; }
+        public DbSet<OptionLtpPutWeekly> OptionLtpPutWeekly { get; set; }
+        public DbSet<OptionLtqCallWeekly> OptionLtqCallWeekly { get; set; }
+        public DbSet<OptionLtqPutWeekly> OptionLtqPutWeekly { get; set; }
+        public DbSet<OptionOICallWeekly> OptionOICallWeekly { get; set; }
+        public DbSet<OptionOIPutWeekly> OptionOIPutWeekly { get; set; }
     }
 }
 

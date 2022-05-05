@@ -21,11 +21,45 @@ namespace SudhirTest.Controller
 
         [HttpGet]
         [Route("SaveOptionInstrument")]
-        public async Task<IActionResult> SaveOptionInstrument()
+        public async Task<bool> SaveOptionInstrument()
         {
 
-            await _indexService.SaveOptionInstrument();
-            return Ok();
+           return await _indexService.SaveOptionInstrument();
+           
+        }
+        [HttpGet]
+        [Route("SaveFutureInstrument")]
+        public async Task<bool> SaveFutureInstrument()
+        {
+
+          return  await _indexService.SaveFutureInstrument();
+            
+        }
+
+        [HttpGet]
+        [Route("SaveFutureData")]
+        public async Task<bool> SaveFutureData()
+        {
+
+           return await _indexService.SaveFutureData();
+            
+        }
+
+        [HttpGet]
+        [Route("DeletePreviousData")]
+        public bool DeletePreviousData()
+        {
+
+            return _indexService.DeletePreviousData();
+            
+        }
+        [HttpGet]
+        [Route("StopFuture")]
+        public async Task<bool> StopFuture()
+        {
+
+           return await _indexService.StopFuture();
+           
         }
     }
 }
